@@ -7,6 +7,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AddModalGedung from '@/components/container/modal/gedung/add-gedung'
 import { getKampusPaginated } from '@/actions/admin/gedung'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import GedungOverview from '@/components/container/gedung-overview'
+import EditModalGedung from '@/components/container/modal/gedung/edit-gedung'
+import DeleteModalGedung from '@/components/container/modal/gedung/delete-gedung'
 
 type Gedung = {
     id: string
