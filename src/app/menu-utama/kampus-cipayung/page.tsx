@@ -53,7 +53,7 @@ export default function Page() {
               <div className="flex items-center gap-2">
                 <Button
                   onClick={() => {
-                    console.log("Lihat detail:", item.id);
+                    router.push(`/menu-utama/kampus-cipayung/${item.slug}`)
                   }}
                   className="bg-slate-800 hover:bg-slate-700"
                   size="sm"
