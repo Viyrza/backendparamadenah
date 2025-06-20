@@ -65,79 +65,60 @@ export default function Page() {
                     <AddModalGedung refetch={refetch} />
                 </div>
 
-                <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="overview">
-                            Overview Gedung & Kelas
-                        </TabsTrigger>
-                        <TabsTrigger value="table">Tabel Gedung</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="overview" className="space-y-4">
-                        <GedungOverview />
-                    </TabsContent>
-
-                    <TabsContent value="table" className="space-y-4">
-                        <DataTable
-                            className="px-5"
-                            columns={[
-                                { key: 'id', title: 'ID' },
-                                { key: 'name', title: 'Name' },
-                                { key: 'image', title: 'Image' },
-                                { key: 'kode_gedung', title: 'Kode Gedung' },
-                                { key: 'action', title: 'Action' },
-                            ]}
-                            rows={gedungList.map((item: Gedung) => ({
-                                id: Number(item.id),
-                                name: item.name,
-                                image: (
-                                    <img
-                                        src={
-                                            item.image ||
-                                            'https://via.placeholder.com/80x40'
-                                        }
-                                        alt={item.name}
-                                        className="w-20 h-12 object-cover rounded-md"
-                                    />
-                                ),
-                                kode_gedung: item.kode_gedung,
-                                action: (
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            onClick={() => {
-                                                router.push(
-                                                    `/menu-utama/kampus-cipayung/gedung/${item.slug}`
-                                                )
-                                            }}
-                                            className="bg-slate-800 hover:bg-slate-700"
-                                            size="sm"
-                                        >
-                                            <Eye />
-                                        </Button>
-                                        <EditModalGedung
-                                            gedungId={item.firebaseId}
-                                            refetch={refetch}
-                                        />
-                                        <DeleteModalGedung
-                                            gedungId={item.firebaseId}
-                                            gedungName={item.name}
-                                            refetch={refetch}
-                                        />
-                                    </div>
-                                ),
-                            }))}
-                            isLoading={loading}
-                            pagination={{
-                                currentPage,
-                                totalPages,
-                                pageSize: 5,
-                                total,
-                                onPageChange: fetchData,
-                            }}
-                        />
-                    </TabsContent>
-                </Tabs>
-            </div>
-        </div>
-    )
+        <DataTable
+          className="px-5"
+          columns={[
+            {key: "id", title:"ID"},
+            { key: "name", title: "Name" },
+            { key: "image", title: "Image" },
+            { key: "action", title: "Action" },
+          ]}
+          rows={gedungList.map((item, index) => ({
+            id: Number(item.id),
+            name: item.name,
+            image: (
+              <img
+                src={item.image || "https://via.placeholder.com/80x40"}
+                alt={item.name}
+                className="w-20 h-12 object-cover rounded-md"
+              />
+            ),
+            action: (
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    console.log("Lihat detail:", item.id);
+                  }}
+                  className="bg-slate-800 hover:bg-slate-700"
+                  size="sm"
+                >
+                  <Eye />
+                </Button>
+                <Button
+                  onClick={() => {
+                    console.log("Edit kampus:", item.id);
+                  }}
+                  className="bg-slate-800 hover:bg-slate-700"
+                  size="sm"
+                >
+                  <Pencil />
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-500"
+                  size="sm"
+                  onClick={() => {
+                    console.log("Hapus kampus:", item.id);
+                  }}
+                >
+                  <Trash />
+                </Button>
+              </div>
+            ),
+          }))}
+          isLoading={loading}
+          refreshCb={refetch}
+        />
+      </div>
+    </div>
+  );
 }
