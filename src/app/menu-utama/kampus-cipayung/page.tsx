@@ -2,14 +2,10 @@
 
 import DataTable from '@/components/container/sadchn-table'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eye, Pencil, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AddModalGedung from '@/components/container/modal/gedung/add-gedung'
-import EditModalGedung from '@/components/container/modal/gedung/edit-gedung'
-import DeleteModalGedung from '@/components/container/modal/gedung/delete-gedung'
-import GedungOverview from '@/components/container/gedung-overview'
 import { getKampusPaginated } from '@/actions/admin/gedung'
 
 type Gedung = {
