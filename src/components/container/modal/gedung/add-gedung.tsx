@@ -24,6 +24,7 @@ const initialState:
               fieldErrors?: {
                   name?: string[]
                   image?: string[]
+                  kode_gedung?: string[]
               }
           }
       } = {
@@ -31,7 +32,6 @@ const initialState:
     error: {
         fieldErrors: {},
     },
-    
 }
 
 type AddModalGedungProps = {
@@ -45,11 +45,11 @@ export default function AddModalGedung(props: AddModalGedungProps) {
         createGedung,
         initialState
     )
- useEffect(() => {
-    if (state.success) {
-      props.refetch?.(); 
-    }
-  }, [state.success, props.refetch]);
+    useEffect(() => {
+        if (state.success) {
+            props.refetch?.()
+        }
+    }, [state.success, props.refetch])
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -78,6 +78,16 @@ export default function AddModalGedung(props: AddModalGedungProps) {
                                 {state.error.fieldErrors.name[0]}
                             </p>
                         )}
+                    </div>
+                    <div>
+                        <Label>Code Gedung (Gedung A)</Label>
+                        <Input name="kode_gedung" type="text" required />
+                        {!state.success &&
+                            state.error?.fieldErrors?.kode_gedung && (
+                                <p className="text-sm text-red-500">
+                                    {state.error.fieldErrors.kode_gedung[0]}
+                                </p>
+                            )}
                     </div>
 
                     <div>

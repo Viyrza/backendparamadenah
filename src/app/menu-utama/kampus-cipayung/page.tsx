@@ -13,15 +13,13 @@ type Gedung = {
   id: string;
   name: string;
   image?: string;
+  kode_gedung?: string;
   slug: string;
 };
 
 export default function Page() {
   const router = useRouter();
   const { dataList: gedungList, loading, error, refetch } = useFetchData<Gedung>("/gedung");
-
-
-
 
 
   return (
@@ -37,6 +35,7 @@ export default function Page() {
             {key: "id", title:"ID"},
             { key: "name", title: "Name" },
             { key: "image", title: "Image" },
+            { key: "kode_gedung", title: "Kode Gedung" },
             { key: "action", title: "Action" },
           ]}
           rows={gedungList.map((item, index) => ({
@@ -49,6 +48,7 @@ export default function Page() {
                 className="w-20 h-12 object-cover rounded-md"
               />
             ),
+            kode_gedung: item.kode_gedung,
             action: (
               <div className="flex items-center gap-2">
                 <Button
