@@ -28,8 +28,8 @@ export default function Page() {
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(0)
     const [total, setTotal] = useState(0)
-    const [hasNextPage, setHasNextPage] = useState(false)
-    const [hasPrevPage, setHasPrevPage] = useState(false)
+    const [, setHasNextPage] = useState(false)
+    const [, setHasPrevPage] = useState(false)
 
     const fetchData = async (page: number = 1) => {
         try {
