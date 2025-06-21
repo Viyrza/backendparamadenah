@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import { useDisclosure } from '@/hooks/use-disclosure'
 import { Pencil } from 'lucide-react'
 import { updateKelas, getKelasById } from '@/actions/admin/kelas'
-import { getKampus } from '@/actions/admin/gedung'
+import BankImageSelector from '@/components/container/bank-image-selector'
 
 const initialState:
     | { success: true; id: string }
@@ -41,6 +41,7 @@ const initialState:
 type EditModalKelasProps = {
     kelasId: string
     gedungId: string
+    gedungName?: string
     lantai: string
     refetch: (page?: number) => void
 }
@@ -48,8 +49,8 @@ type EditModalKelasProps = {
 export default function EditModalKelas(props: EditModalKelasProps) {
     const { isOpen, setIsOpen } = useDisclosure()
     const [kelasData, setKelasData] = useState<any>(null)
-    const [gedungList, setGedungList] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
+    const [selectedImageUrl, setSelectedImageUrl] = useState('')
 
     const [state, formAction, isPending] = useActionState(
         (prevState: any, formData: FormData) =>
@@ -61,33 +62,28 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                 formData
             ),
         initialState
-    )
-
-    // Fetch kelas data and gedung list when modal opens
+    ) // Fetch kelas data when modal opens
     useEffect(() => {
         if (isOpen) {
             const fetchData = async () => {
                 setLoading(true)
                 try {
-                    const [kelasResult, gedungResult] = await Promise.all([
-                        getKelasById(
-                            props.kelasId,
-                            props.gedungId,
-                            props.lantai
-                        ),
-                        getKampus(),
-                    ])
+                    const kelasResult = await getKelasById(
+                        props.kelasId,
+                        props.gedungId,
+                        props.lantai
+                    )
                     setKelasData(kelasResult)
-                    setGedungList(gedungResult)
+                    setSelectedImageUrl(kelasResult?.image || '') // Set selected image
                 } catch (error) {
-                    console.error('Error fetching data:', error)
+                    console.error('Error fetching kelas data:', error)
                 } finally {
                     setLoading(false)
                 }
             }
             fetchData()
         }
-    }, [isOpen, props.kelasId, props.lantai])
+    }, [isOpen, props.kelasId, props.gedungId, props.lantai])
 
     useEffect(() => {
         if (state.success) {
@@ -118,37 +114,24 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                         </div>
                     ) : (
                         <div className="space-y-3 max-h-96 overflow-y-auto p-2">
+                            {/* Hidden input for gedung_id - keep existing gedung */}
+                            <input
+                                type="hidden"
+                                name="gedung_id"
+                                value={props.gedungId}
+                            />
+                            {/* Display gedung info (read-only) */}
                             <div>
-                                <Label>Pilih Gedung</Label>
-                                <select
-                                    name="gedung_id"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500"
-                                    defaultValue={kelasData?.gedung_id || ''}
-                                    required
-                                >
-                                    <option value="">Pilih Gedung</option>
-                                    {gedungList.map((gedung) => (
-                                        <option
-                                            key={gedung.id}
-                                            value={gedung.id}
-                                        >
-                                            {gedung.name} ({gedung.kode_gedung})
-                                        </option>
-                                    ))}
-                                </select>
-                                {!state.success &&
-                                    state.error?.fieldErrors?.gedung_id?.map(
-                                        (error, index) => (
-                                            <p
-                                                key={index}
-                                                className="text-sm text-red-500"
-                                            >
-                                                {error}
-                                            </p>
-                                        )
-                                    )}
+                                <Label>Gedung</Label>
+                                <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
+                                    {props.gedungName ||
+                                        `Gedung ID: ${props.gedungId}`}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Gedung tidak dapat diubah saat mengedit
+                                    kelas
+                                </p>
                             </div>
-
                             <div>
                                 <Label>Code Kelas</Label>
                                 <Input
@@ -170,7 +153,6 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                                         )
                                     )}
                             </div>
-
                             <div>
                                 <Label>Kapasitas (orang)</Label>
                                 <Input
@@ -194,7 +176,6 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                                         )
                                     )}
                             </div>
-
                             <div>
                                 <Label>Jumlah Papan Tulis</Label>
                                 <Input
@@ -218,7 +199,6 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                                         )
                                     )}
                             </div>
-
                             <div>
                                 <Label>Jumlah Televisi</Label>
                                 <Input
@@ -242,7 +222,6 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                                         )
                                     )}
                             </div>
-
                             <div>
                                 <Label>Lantai</Label>
                                 <select
@@ -269,16 +248,48 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                                             </p>
                                         )
                                     )}
-                            </div>
-
+                            </div>{' '}
                             <div>
-                                <Label>Image URL (Optional)</Label>
-                                <Input
-                                    name="image"
-                                    type="url"
-                                    placeholder="https://example.com/image.jpg"
-                                    defaultValue={kelasData?.image || ''}
-                                />
+                                <Label>Image (Optional)</Label>
+                                <div className="space-y-2">
+                                    {/* Hidden input for form submission */}
+                                    <input
+                                        type="hidden"
+                                        name="image"
+                                        value={selectedImageUrl}
+                                    />
+
+                                    {/* URL Input */}
+                                    <Input
+                                        type="url"
+                                        placeholder="atau masukkan URL langsung"
+                                        value={selectedImageUrl}
+                                        onChange={(e) =>
+                                            setSelectedImageUrl(e.target.value)
+                                        }
+                                    />
+
+                                    {/* Bank Image Selector */}
+                                    <BankImageSelector
+                                        onImageSelect={setSelectedImageUrl}
+                                        selectedImageUrl={selectedImageUrl}
+                                    />
+
+                                    {/* Preview */}
+                                    {selectedImageUrl && (
+                                        <div className="mt-2">
+                                            <img
+                                                src={selectedImageUrl}
+                                                alt="Preview"
+                                                className="w-full h-24 object-cover rounded border"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display =
+                                                        'none'
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                                 {!state.success &&
                                     state.error?.fieldErrors?.image?.map(
                                         (error, index) => (

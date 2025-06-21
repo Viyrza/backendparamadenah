@@ -334,18 +334,34 @@ export async function updateKelas(
             error: parsed.error.flatten(),
         }
     }
-
     const data = parsed.data
 
     try {
+        console.log('Update Kelas Debug:', {
+            kelasId,
+            gedungId,
+            lantai,
+            formData: Object.fromEntries(formData.entries()),
+        })
+
         // Ambil data kelas yang sudah ada
         const kelasRef = ref(
             database,
             `gedung/${gedungId}/kelas/${lantai}/${kelasId}`
         )
+        console.log(
+            'Kelas ref path:',
+            `gedung/${gedungId}/kelas/${lantai}/${kelasId}`
+        )
+
         const snapshot = await get(kelasRef)
+        console.log('Kelas exists:', snapshot.exists())
 
         if (!snapshot.exists()) {
+            console.log(
+                'Kelas not found at path:',
+                `gedung/${gedungId}/kelas/${lantai}/${kelasId}`
+            )
             return {
                 success: false,
                 error: {
@@ -355,12 +371,11 @@ export async function updateKelas(
                 },
             }
         }
-
         const existingData = snapshot.val()
-        const oldGedungId = gedungId // gedungId dari parameter
-        const oldLantai = lantai // lantai dari parameter
+        console.log('Existing kelas data:', existingData)
 
-        // Update data kelas
+        const oldGedungId = gedungId // gedungId dari parameter
+        const oldLantai = lantai // lantai dari parameter        // Update data kelas - keep existing gedung_id and only allow lantai change within same gedung
         const updatedKelas = {
             ...existingData,
             code_kelas: data.code_kelas,
@@ -368,27 +383,38 @@ export async function updateKelas(
             total_papan_tulis: data.total_papan_tulis,
             total_televisi: data.total_televisi,
             lantai: data.lantai,
-            gedung_id: data.gedung_id,
+            gedung_id: oldGedungId, // Always keep the original gedung_id
             image: data.image || null,
             slug: slugify(`${data.code_kelas}-${data.lantai}`, { lower: true }),
             updated_at: new Date().toISOString(),
         }
 
-        // Jika gedung atau lantai berubah, pindahkan kelas
-        if (data.gedung_id !== oldGedungId || data.lantai !== oldLantai) {
-            // Hapus dari lokasi lama
+        console.log('Updated kelas data:', updatedKelas) // Only allow lantai change within the same gedung (no gedung change allowed in edit)
+        if (data.lantai !== oldLantai) {
+            console.log('Moving kelas to new lantai within same gedung:', {
+                from: `gedung/${oldGedungId}/kelas/${oldLantai}/${kelasId}`,
+                to: `gedung/${oldGedungId}/kelas/${data.lantai}/${kelasId}`,
+            })
+
+            // Hapus dari lantai lama
             await set(kelasRef, null)
 
-            // Tambah ke lokasi baru
+            // Tambah ke lantai baru dalam gedung yang sama
             const newKelasRef = ref(
                 database,
-                `gedung/${data.gedung_id}/kelas/${data.lantai}/${kelasId}`
+                `gedung/${oldGedungId}/kelas/${data.lantai}/${kelasId}`
             )
             await set(newKelasRef, updatedKelas)
         } else {
+            console.log(
+                'Updating kelas in same location:',
+                `gedung/${oldGedungId}/kelas/${oldLantai}/${kelasId}`
+            )
             // Update di lokasi yang sama
             await set(kelasRef, updatedKelas)
         }
+
+        console.log('Kelas update completed successfully')
 
         toast.success(`Kelas ${data.code_kelas} berhasil diupdate`, {
             position: 'bottom-right',

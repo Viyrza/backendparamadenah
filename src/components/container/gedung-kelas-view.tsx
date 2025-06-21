@@ -220,8 +220,7 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
                                                 <h4 className="font-semibold text-lg">
                                                     {kelas.code_kelas}
                                                 </h4>{' '}
-                                                <div className="flex gap-1">
-                                                    <EditModalKelas
+                                                <div className="flex gap-1">                                                    <EditModalKelas
                                                         kelasId={
                                                             kelas.firebaseId ||
                                                             ''
@@ -229,6 +228,7 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
                                                         gedungId={
                                                             gedung.firebaseId
                                                         }
+                                                        gedungName={gedung.name}
                                                         lantai={kelas.lantai}
                                                         refetch={() =>
                                                             fetchData()

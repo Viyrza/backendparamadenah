@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { useDisclosure } from '@/hooks/use-disclosure'
 import { Plus } from 'lucide-react'
 import { createKelas } from '@/actions/admin/kelas'
+import BankImageSelector from '@/components/container/bank-image-selector'
 
 const initialState:
     | { success: true; id: string | null }
@@ -48,16 +49,17 @@ export default function AddKelasToGedungModal(
     props: AddKelasToGedungModalProps
 ) {
     const { isOpen, setIsOpen } = useDisclosure()
+    const [selectedImageUrl, setSelectedImageUrl] = useState('')
 
     const [state, formAction, isPending] = useActionState(
         createKelas,
         initialState
     )
 
-    // Reset form and close modal when kelas is successfully created
     useEffect(() => {
         if (state.success) {
             setIsOpen(false)
+            setSelectedImageUrl('') // Reset selected image
             props.refetch?.()
         }
     }, [state.success, setIsOpen, props])
@@ -89,7 +91,6 @@ export default function AddKelasToGedungModal(
                             name="gedung_id"
                             value={props.gedungId}
                         />
-
                         <div>
                             <Label>Code Kelas</Label>
                             <Input
@@ -110,7 +111,6 @@ export default function AddKelasToGedungModal(
                                     )
                                 )}
                         </div>
-
                         <div>
                             <Label>Lantai</Label>
                             <select
@@ -137,7 +137,6 @@ export default function AddKelasToGedungModal(
                                     )
                                 )}
                         </div>
-
                         <div>
                             <Label>Kapasitas (orang)</Label>
                             <Input
@@ -159,7 +158,6 @@ export default function AddKelasToGedungModal(
                                     )
                                 )}
                         </div>
-
                         <div>
                             <Label>Jumlah Papan Tulis</Label>
                             <Input
@@ -182,7 +180,6 @@ export default function AddKelasToGedungModal(
                                     )
                                 )}
                         </div>
-
                         <div>
                             <Label>Jumlah Televisi</Label>
                             <Input
@@ -204,15 +201,48 @@ export default function AddKelasToGedungModal(
                                         </p>
                                     )
                                 )}
-                        </div>
-
+                        </div>{' '}
                         <div>
-                            <Label>Image URL (Optional)</Label>
-                            <Input
-                                name="image"
-                                type="url"
-                                placeholder="https://example.com/image.jpg"
-                            />
+                            <Label>Image (Optional)</Label>
+                            <div className="space-y-2">
+                                {/* Hidden input for form submission */}
+                                <input
+                                    type="hidden"
+                                    name="image"
+                                    value={selectedImageUrl}
+                                />
+
+                                {/* URL Input */}
+                                <Input
+                                    type="url"
+                                    placeholder="atau masukkan URL langsung"
+                                    value={selectedImageUrl}
+                                    onChange={(e) =>
+                                        setSelectedImageUrl(e.target.value)
+                                    }
+                                />
+
+                                {/* Bank Image Selector */}
+                                <BankImageSelector
+                                    onImageSelect={setSelectedImageUrl}
+                                    selectedImageUrl={selectedImageUrl}
+                                />
+
+                                {/* Preview */}
+                                {selectedImageUrl && (
+                                    <div className="mt-2">
+                                        <img
+                                            src={selectedImageUrl}
+                                            alt="Preview"
+                                            className="w-full h-24 object-cover rounded border"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display =
+                                                    'none'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
                             {!state.success &&
                                 state.error?.fieldErrors?.image?.map(
                                     (error, index) => (

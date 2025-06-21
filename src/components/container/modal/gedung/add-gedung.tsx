@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { useDisclosure } from '@/hooks/use-disclosure'
 import { Plus } from 'lucide-react'
 import { createGedung } from '@/actions/admin/gedung'
+import BankImageSelector from '../../bank-image-selector'
 
 const initialState:
     | { success: true; id: string | null }
@@ -40,19 +41,38 @@ type AddModalGedungProps = {
 
 export default function AddModalGedung(props: AddModalGedungProps) {
     const { isOpen, setIsOpen } = useDisclosure()
-
+    const [selectedImageUrl, setSelectedImageUrl] = useState('')
+    const [imageInputValue, setImageInputValue] = useState('')
     const [state, formAction, isPending] = useActionState(
         createGedung,
         initialState
     )
-    useEffect(() => {
-        if (state.success) {
-            props.refetch?.()
+
+    // Update input value when image is selected from bank
+    const handleImageSelect = (imageUrl: string) => {
+        console.log('Received image URL in add-gedung:', imageUrl) // Debug log
+        setSelectedImageUrl(imageUrl)
+        setImageInputValue(imageUrl)
+    }
+
+    // Update selected image when input changes manually
+    const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        setImageInputValue(value)
+        setSelectedImageUrl(value)
+    }
+
+    // Reset form when modal closes
+    const handleOpenChange = (open: boolean) => {
+        setIsOpen(open)
+        if (!open) {
+            setSelectedImageUrl('')
+            setImageInputValue('')
         }
-    }, [state.success, props.refetch])
+    }
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button
                     variant="default"
@@ -90,14 +110,79 @@ export default function AddModalGedung(props: AddModalGedungProps) {
                             )}
                     </div>
 
-                    <div>
+                    <div className="space-y-3">
                         <Label>Image URL</Label>
-                        <Input name="image" type="url" />
+                        <Input
+                            name="image"
+                            type="url"
+                            placeholder="Masukkan URL gambar atau pilih dari bank"
+                            value={imageInputValue}
+                            onChange={handleImageInputChange}
+                        />
                         {!state.success && state.error?.fieldErrors?.image && (
                             <p className="text-sm text-red-500">
                                 {state.error.fieldErrors.image[0]}
                             </p>
                         )}
+
+                        {/* Image Preview */}
+                        {selectedImageUrl && (
+                            <div className="mt-3">
+                                <Label className="text-sm text-gray-600 mb-2 block">
+                                    Preview:
+                                </Label>
+                                <div className="relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+                                    <img
+                                        src={selectedImageUrl}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            console.error(
+                                                'Image load error:',
+                                                selectedImageUrl
+                                            )
+                                            e.currentTarget.src =
+                                                '/placeholder-image.png'
+                                            e.currentTarget.alt =
+                                                'Error loading image'
+                                        }}
+                                        onLoad={() => {
+                                            console.log(
+                                                'Image loaded successfully:',
+                                                selectedImageUrl
+                                            )
+                                        }}
+                                    />
+                                    {/* Loading/Error fallback */}
+                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 opacity-0 transition-opacity">
+                                        <span className="text-gray-500 text-sm">
+                                            Loading image...
+                                        </span>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1 break-all">
+                                    URL: {selectedImageUrl}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Bank Image Selector */}
+                        <div className="pt-2">
+                            <BankImageSelector
+                                onImageSelect={handleImageSelect}
+                                selectedImageUrl={selectedImageUrl}
+                                triggerButton={
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Pilih dari Bank Image
+                                    </Button>
+                                }
+                            />
+                        </div>
                     </div>
 
                     <DialogFooter>
