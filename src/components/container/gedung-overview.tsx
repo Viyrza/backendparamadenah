@@ -26,11 +26,7 @@ export default function GedungOverview() {
             try {
                 setLoading(true)
 
-                // Fetch all gedung
                 const allGedung = await getKampus()
-                console.log('All gedung data:', allGedung) // Debug log
-
-                // Fetch statistics for each gedung
                 const gedungWithStats = await Promise.all(
                     allGedung.map(async (gedung: Gedung) => {
                         try {
@@ -39,12 +35,11 @@ export default function GedungOverview() {
                             ) // Debug log
                             const stats =
                                 await GedungKelasRelation.getGedungStatistics(
-                                    gedung.id // This is the Firebase ID from getKampus()
+                                    gedung.id 
                                 )
-                            console.log(`Stats for ${gedung.name}:`, stats) // Debug log
                             return {
                                 ...gedung,
-                                firebaseId: gedung.id, // Add firebaseId for consistency
+                                firebaseId: gedung.id, 
                                 stats,
                             }
                         } catch (error) {
@@ -64,8 +59,6 @@ export default function GedungOverview() {
                         }
                     })
                 )
-
-                console.log('Final gedung with stats:', gedungWithStats) // Debug log
                 setGedungList(gedungWithStats)
             } catch (error) {
                 console.error('Error fetching gedung overview:', error)
@@ -139,82 +132,6 @@ export default function GedungOverview() {
                                     />
                                 )}
 
-                                {/* Statistics Grid */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-blue-50 p-3 rounded-lg">
-                                        <div className="flex items-center gap-2">
-                                            <Building className="h-4 w-4 text-blue-500" />
-                                            <div>
-                                                <p className="text-xs text-gray-600">
-                                                    Kelas
-                                                </p>
-                                                <p className="text-lg font-semibold text-blue-700">
-                                                    {gedung.stats.totalKelas}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-green-50 p-3 rounded-lg">
-                                        <div className="flex items-center gap-2">
-                                            <Users className="h-4 w-4 text-green-500" />
-                                            <div>
-                                                <p className="text-xs text-gray-600">
-                                                    Kapasitas
-                                                </p>
-                                                <p className="text-lg font-semibold text-green-700">
-                                                    {
-                                                        gedung.stats
-                                                            .totalKapasitas
-                                                    }
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-yellow-50 p-3 rounded-lg">
-                                        <div className="flex items-center gap-2">
-                                            <BookOpen className="h-4 w-4 text-yellow-500" />
-                                            <div>
-                                                <p className="text-xs text-gray-600">
-                                                    Papan
-                                                </p>
-                                                <p className="text-lg font-semibold text-yellow-700">
-                                                    {
-                                                        gedung.stats
-                                                            .totalPapanTulis
-                                                    }
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-purple-50 p-3 rounded-lg">
-                                        <div className="flex items-center gap-2">
-                                            <Tv className="h-4 w-4 text-purple-500" />
-                                            <div>
-                                                <p className="text-xs text-gray-600">
-                                                    TV
-                                                </p>
-                                                <p className="text-lg font-semibold text-purple-700">
-                                                    {gedung.stats.totalTelevisi}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Summary */}
-                                <div className="pt-2 border-t">
-                                    <p className="text-sm text-gray-600">
-                                        {gedung.stats.totalKelas > 0
-                                            ? `Rata-rata ${Math.round(
-                                                  gedung.stats.totalKapasitas /
-                                                      gedung.stats.totalKelas
-                                              )} orang per kelas`
-                                            : 'Belum ada kelas'}
-                                    </p>
-                                </div>
                             </CardContent>
                         </Card>
                     ))}

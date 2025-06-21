@@ -2,7 +2,7 @@
 
 import DataTable from '@/components/container/sadchn-table'
 import { Button } from '@/components/ui/button'
-import { Eye, Pencil, Trash } from 'lucide-react'
+import { ArrowLeft, Eye, Pencil, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AddModalGedung from '@/components/container/modal/gedung/add-gedung'
@@ -56,12 +56,16 @@ export default function Page() {
         fetchData()
     }, [])
 
-    console.log(gedungList)
-
     return (
         <div className="space-y-6 mx-auto pt-8">
             <div className="grid grid-cols-1 gap-6">
-                <div className="flex justify-end">
+                <div className="flex justify-between">
+                    <Button variant="outline">
+                        <ArrowLeft />
+                        <span className="ml-2" onClick={() => router.back()}>
+                            Kembali
+                        </span>
+                    </Button>
                     <AddModalGedung refetch={refetch} />
                 </div>
 
@@ -103,17 +107,6 @@ export default function Page() {
                                 kode_gedung: item.kode_gedung,
                                 action: (
                                     <div className="flex items-center gap-2">
-                                        <Button
-                                            onClick={() => {
-                                                router.push(
-                                                    `/menu-utama/kampus-cipayung/gedung/${item.slug}`
-                                                )
-                                            }}
-                                            className="bg-slate-800 hover:bg-slate-700"
-                                            size="sm"
-                                        >
-                                            <Eye />
-                                        </Button>
                                         <EditModalGedung
                                             gedungId={item.firebaseId}
                                             refetch={refetch}
