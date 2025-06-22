@@ -38,14 +38,21 @@ interface BankImage {
     updatedAt: string
 }
 
-interface UploadImageModalProps {
+type UploadImageModalProps = {
     onImageUploaded: () => void
+}
+
+type FormDataState = {
+    name: string
+    url: string
+    description: string
+    tags: string
 }
 
 function UploadImageModal({ onImageUploaded }: UploadImageModalProps) {
     const { isOpen, setIsOpen } = useDisclosure()
-    const [uploading, setUploading] = useState(false)
-    const [formData, setFormData] = useState({
+    const [uploading, setUploading] = useState<boolean>(false)
+    const [formData, setFormData] = useState<FormDataState>({
         name: '',
         url: '',
         description: '',

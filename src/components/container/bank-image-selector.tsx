@@ -15,7 +15,7 @@ import { useDisclosure } from '@/hooks/use-disclosure'
 import { Image as ImageIcon, Search, Check, Grid, List } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
-interface BankImage {
+type BankImage = {
     id: string
     name: string
     url: string
@@ -25,11 +25,13 @@ interface BankImage {
     updatedAt: string
 }
 
-interface BankImageSelectorProps {
+type BankImageSelectorProps = {
     onImageSelect: (imageUrl: string) => void
     triggerButton?: React.ReactNode
     selectedImageUrl?: string
 }
+
+type ViewMode = 'grid' | 'list'
 
 export default function BankImageSelector({
     onImageSelect,
@@ -38,12 +40,12 @@ export default function BankImageSelector({
 }: BankImageSelectorProps) {
     const { isOpen, setIsOpen } = useDisclosure()
     const [images, setImages] = useState<BankImage[]>([])
-    const [loading, setLoading] = useState(false)
-    const [searchTerm, setSearchTerm] = useState('')
+    const [loading, setLoading] = useState<boolean>(false)
+    const [searchTerm, setSearchTerm] = useState<string>('')
     const [selectedImage, setSelectedImage] = useState<string | null>(
         selectedImageUrl || null
     )
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+    const [viewMode, setViewMode] = useState<ViewMode>('grid')
 
     const fetchImages = async () => {
         try {
@@ -52,19 +54,17 @@ export default function BankImageSelector({
             const result = await res.json()
 
             if (result.success) {
-                // Map the response to use secured_url and ensure proper structure
                 const mappedImages = result.data.map(
                     (image: any, index: number) => {
                         const imageUrl =
                             image.secured_url || image.secure_url || image.url
-                        console.log(`Image ${index + 1} URL:`, imageUrl) // Debug log
                         return {
                             id: image.public_id || `image-${index}`,
                             name:
                                 image.display_name ||
                                 image.public_id ||
                                 `Image ${index + 1}`,
-                            url: imageUrl, // Use secured_url primarily
+                            url: imageUrl,
                             description:
                                 image.context?.alt ||
                                 image.context?.caption ||
@@ -105,7 +105,6 @@ export default function BankImageSelector({
 
     const handleConfirmSelection = () => {
         if (selectedImage) {
-            console.log('Selected image URL:', selectedImage) // Debug log
             onImageSelect(selectedImage)
             setIsOpen(false)
             toast.success('Image berhasil dipilih')
@@ -140,7 +139,7 @@ export default function BankImageSelector({
             </DialogTrigger>
 
             <DialogContent className="max-w-full w-screen max-h-full h-screen flex flex-col p-0 m-0 rounded-none">
-                {/* Header */}
+                
                 <div className="flex-shrink-0 p-6 border-b">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-semibold">
@@ -148,7 +147,6 @@ export default function BankImageSelector({
                         </DialogTitle>
                     </DialogHeader>
 
-                    {/* Search and Controls */}
                     <div className="flex gap-4 items-center mt-4">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -179,8 +177,7 @@ export default function BankImageSelector({
                         </div>
                     </div>
                 </div>
-
-                {/* Selected Image Preview */}
+                
                 {selectedImage && (
                     <div className="flex-shrink-0 p-4 bg-blue-50 border-b">
                         <div className="flex items-center gap-4">

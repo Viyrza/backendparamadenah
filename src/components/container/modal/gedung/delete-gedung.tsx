@@ -21,7 +21,7 @@ type DeleteModalGedungProps = {
 
 export default function DeleteModalGedung(props: DeleteModalGedungProps) {
     const { isOpen, setIsOpen } = useDisclosure()
-    const [isDeleting, setIsDeleting] = useState(false)
+    const [isDeleting, setIsDeleting] = useState<boolean>(false)
     const [result, setResult] = useState<{
         success: boolean
         error?: string

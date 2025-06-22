@@ -2,21 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import ImageFormDialog, {
     BankImage,
 } from '@/components/container/modal/bank-image/image-form'
 import { useDisclosure } from '@/hooks/use-disclosure'
 import { DeleteImageDialog } from '@/components/container/modal/bank-image/delete-image'
-import { EditImageDialog } from '@/components/container/modal/bank-image/edit-image'
 
 export default function BankImageManagementPage() {
     const [images, setImages] = useState<BankImage[]>([])
     const [selectedImage, setSelectedImage] = useState<BankImage | null>(null)
     const { isOpen: openForm, setIsOpen: setOpenForm } = useDisclosure()
     const { isOpen: openDelete, setIsOpen: setOpenDelete } = useDisclosure()
-    const { isOpen: openEdit, setIsOpen: setOpenEdit } = useDisclosure()
 
     const fetchImages = async () => {
         try {
@@ -30,7 +28,7 @@ export default function BankImageManagementPage() {
                             image.display_name ||
                             image.public_id ||
                             `Image ${index + 1}`,
-                        url: image.secured_url || image.secure_url || image.url, // Use secured_url primarily
+                        url: image.secured_url || image.secure_url || image.url,
                         description:
                             image.context?.alt || image.context?.caption || '',
                         tags: image.tags || [],
@@ -51,12 +49,7 @@ export default function BankImageManagementPage() {
 
     const handleDeleteImage = async (id: string) => {
         try {
-            console.log('Attempting to delete image with ID:', id) // Debug log
-
-            // ID already contains the full path from Cloudinary (e.g., "bank-image/fw5ovtqok1nsjmjrdny5")
-            // We need to encode it properly for URL
             const encodedId = encodeURIComponent(id)
-            console.log('Encoded ID:', encodedId) // Debug log
 
             const response = await fetch(`/api/upload/${encodedId}`, {
                 method: 'DELETE',
@@ -70,7 +63,6 @@ export default function BankImageManagementPage() {
 
             if (result.success) {
                 toast.success('Image berhasil dihapus')
-                // Refresh the images list
                 fetchImages()
             } else {
                 throw new Error(result.error || 'Gagal menghapus image')
@@ -173,18 +165,7 @@ export default function BankImageManagementPage() {
                                         ).toLocaleDateString('id-ID')}
                                     </span>
                                 </div>
-                                <div className='flex gap-2 py-3'>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                            setSelectedImage(img)
-                                            setOpenEdit(true)
-                                        }}
-                                    >
-                                        <Pencil className="w-3 h-3 mr-1" />
-                                        Edit
-                                    </Button>
+                                <div className="flex gap-2 py-3">
                                     <Button
                                         size="sm"
                                         variant="destructive"
@@ -215,14 +196,6 @@ export default function BankImageManagementPage() {
                     onOpenChange={setOpenDelete}
                     image={selectedImage}
                     onDelete={handleDeleteImage}
-                />
-            )}
-            {selectedImage && (
-                <EditImageDialog
-                    open={openEdit}
-                    onOpenChange={setOpenEdit}
-                    image={selectedImage}
-                    onEdit={fetchImages}
                 />
             )}
         </div>

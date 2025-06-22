@@ -25,7 +25,7 @@ export function DeleteImageDialog({
     image,
     onDelete,
 }: DeleteDialogProps) {
-    const [isDeleting, setIsDeleting] = useState(false)
+    const [isDeleting, setIsDeleting] = useState<boolean>(false)
 
     const handleDelete = async () => {
         setIsDeleting(true)

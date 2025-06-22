@@ -21,13 +21,15 @@ type DeleteModalKelasProps = {
     refetch: (page?: number) => void
 }
 
+type ResultState = {
+    success: boolean
+    error?: string
+}
+
 export default function DeleteModalKelas(props: DeleteModalKelasProps) {
     const { isOpen, setIsOpen } = useDisclosure()
-    const [isDeleting, setIsDeleting] = useState(false)
-    const [result, setResult] = useState<{
-        success: boolean
-        error?: string
-    } | null>(null)
+    const [isDeleting, setIsDeleting] = useState<boolean>(false)
+    const [result, setResult] = useState<ResultState | null>(null)
 
     const handleDelete = async () => {
         setIsDeleting(true)

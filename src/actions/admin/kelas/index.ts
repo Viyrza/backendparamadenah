@@ -69,17 +69,14 @@ export async function createKelas(
     const data = parsed.data
 
     try {
-        // Create reference to the specific gedung's lantai node
         const kelasRef = ref(
             database,
             `gedung/${data.gedung_id}/kelas/${data.lantai}`
         )
 
-        // Get the current highest ID for this lantai in this gedung
         const snapshot = await get(kelasRef)
         const existingData = snapshot.exists() ? snapshot.val() : {}
 
-        // Generate unique ID for this lantai in this gedung
         let nextId = 1
         if (Object.keys(existingData).length > 0) {
             const existingIds = Object.values(existingData)
@@ -99,7 +96,6 @@ export async function createKelas(
             }
         }
 
-        // Create new classroom data
         const newKelas = {
             id: `${data.lantai}-${nextId}`,
             code_kelas: data.code_kelas,
@@ -107,7 +103,7 @@ export async function createKelas(
             total_papan_tulis: data.total_papan_tulis,
             total_televisi: data.total_televisi,
             lantai: data.lantai,
-            gedung_id: data.gedung_id, // Relasi ke gedung
+            gedung_id: data.gedung_id,
             image: data.image || null,
             slug: slugify(`${data.code_kelas}-${data.lantai}`, { lower: true }),
             created_at: new Date().toISOString(),
@@ -116,8 +112,6 @@ export async function createKelas(
 
         const newRef = push(kelasRef)
         await set(newRef, newKelas)
-
-        // Tidak perlu lagi menambahkan ke gedung secara terpisah karena sudah tersimpan di dalam gedung
 
         toast.success(
             `Kelas berhasil dibuat di lantai ${
@@ -148,7 +142,6 @@ export async function createKelas(
     }
 }
 
-// Fungsi untuk mengambil semua kelas dengan pagination
 export async function getAllKelas(page: number = 1, limit: number = 5) {
     try {
         const gedungRef = ref(database, 'gedung')
@@ -160,11 +153,9 @@ export async function getAllKelas(page: number = 1, limit: number = 5) {
 
         const kelasList: any[] = []
 
-        // Iterasi melalui setiap gedung
         Object.entries(data).forEach(
             ([gedungId, gedungData]: [string, any]) => {
                 if (gedungData && gedungData.kelas) {
-                    // Iterasi melalui setiap lantai dalam gedung
                     Object.entries(gedungData.kelas).forEach(
                         ([lantai, kelasData]: [string, any]) => {
                             if (kelasData && typeof kelasData === 'object') {
@@ -184,14 +175,12 @@ export async function getAllKelas(page: number = 1, limit: number = 5) {
             }
         )
 
-        // Sorting berdasarkan created_at (terbaru dulu)
         kelasList.sort(
             (a, b) =>
                 new Date(b.created_at).getTime() -
                 new Date(a.created_at).getTime()
         )
 
-        // Pagination
         const total = kelasList.length
         const totalPages = Math.ceil(total / limit)
         const startIndex = (page - 1) * limit
@@ -212,7 +201,6 @@ export async function getAllKelas(page: number = 1, limit: number = 5) {
     }
 }
 
-// Fungsi untuk mengambil kelas berdasarkan gedung dengan pagination
 export async function getKelasByGedungId(
     gedungId: string,
     page: number = 1,
@@ -228,7 +216,6 @@ export async function getKelasByGedungId(
 
         const kelasList: any[] = []
 
-        // Iterasi melalui setiap lantai dalam gedung
         Object.entries(data).forEach(([lantai, kelasData]: [string, any]) => {
             if (kelasData && typeof kelasData === 'object') {
                 Object.entries(kelasData).forEach(
@@ -243,14 +230,12 @@ export async function getKelasByGedungId(
             }
         })
 
-        // Sorting berdasarkan created_at (terbaru dulu)
         kelasList.sort(
             (a, b) =>
                 new Date(b.created_at).getTime() -
                 new Date(a.created_at).getTime()
         )
 
-        // Pagination
         const total = kelasList.length
         const totalPages = Math.ceil(total / limit)
         const startIndex = (page - 1) * limit
@@ -266,12 +251,10 @@ export async function getKelasByGedungId(
             hasPrevPage: page > 1,
         }
     } catch (error) {
-        console.error('Gagal ambil data kelas berdasarkan gedung:', error)
         return { data: [], total: 0, currentPage: page, totalPages: 0 }
     }
 }
 
-// Update Schema untuk edit kelas
 const updateKelasSchema = z.object({
     code_kelas: z
         .string()
@@ -294,7 +277,6 @@ const updateKelasSchema = z.object({
         .or(z.literal('')),
 })
 
-// Fungsi untuk mengupdate kelas
 export async function updateKelas(
     kelasId: string,
     gedungId: string,
@@ -337,31 +319,13 @@ export async function updateKelas(
     const data = parsed.data
 
     try {
-        console.log('Update Kelas Debug:', {
-            kelasId,
-            gedungId,
-            lantai,
-            formData: Object.fromEntries(formData.entries()),
-        })
-
-        // Ambil data kelas yang sudah ada
         const kelasRef = ref(
             database,
             `gedung/${gedungId}/kelas/${lantai}/${kelasId}`
         )
-        console.log(
-            'Kelas ref path:',
-            `gedung/${gedungId}/kelas/${lantai}/${kelasId}`
-        )
-
         const snapshot = await get(kelasRef)
-        console.log('Kelas exists:', snapshot.exists())
 
         if (!snapshot.exists()) {
-            console.log(
-                'Kelas not found at path:',
-                `gedung/${gedungId}/kelas/${lantai}/${kelasId}`
-            )
             return {
                 success: false,
                 error: {
@@ -372,10 +336,9 @@ export async function updateKelas(
             }
         }
         const existingData = snapshot.val()
-        console.log('Existing kelas data:', existingData)
 
-        const oldGedungId = gedungId // gedungId dari parameter
-        const oldLantai = lantai // lantai dari parameter        // Update data kelas - keep existing gedung_id and only allow lantai change within same gedung
+        const oldGedungId = gedungId
+        const oldLantai = lantai
         const updatedKelas = {
             ...existingData,
             code_kelas: data.code_kelas,
@@ -383,38 +346,23 @@ export async function updateKelas(
             total_papan_tulis: data.total_papan_tulis,
             total_televisi: data.total_televisi,
             lantai: data.lantai,
-            gedung_id: oldGedungId, // Always keep the original gedung_id
+            gedung_id: oldGedungId,
             image: data.image || null,
             slug: slugify(`${data.code_kelas}-${data.lantai}`, { lower: true }),
             updated_at: new Date().toISOString(),
         }
 
-        console.log('Updated kelas data:', updatedKelas) // Only allow lantai change within the same gedung (no gedung change allowed in edit)
         if (data.lantai !== oldLantai) {
-            console.log('Moving kelas to new lantai within same gedung:', {
-                from: `gedung/${oldGedungId}/kelas/${oldLantai}/${kelasId}`,
-                to: `gedung/${oldGedungId}/kelas/${data.lantai}/${kelasId}`,
-            })
-
-            // Hapus dari lantai lama
             await set(kelasRef, null)
 
-            // Tambah ke lantai baru dalam gedung yang sama
             const newKelasRef = ref(
                 database,
                 `gedung/${oldGedungId}/kelas/${data.lantai}/${kelasId}`
             )
             await set(newKelasRef, updatedKelas)
         } else {
-            console.log(
-                'Updating kelas in same location:',
-                `gedung/${oldGedungId}/kelas/${oldLantai}/${kelasId}`
-            )
-            // Update di lokasi yang sama
             await set(kelasRef, updatedKelas)
         }
-
-        console.log('Kelas update completed successfully')
 
         toast.success(`Kelas ${data.code_kelas} berhasil diupdate`, {
             position: 'bottom-right',
@@ -425,7 +373,6 @@ export async function updateKelas(
             id: kelasId,
         }
     } catch (err) {
-        console.error('Gagal mengupdate kelas:', err)
         toast.error('Gagal mengupdate kelas', {
             position: 'bottom-right',
         })
@@ -440,7 +387,6 @@ export async function updateKelas(
     }
 }
 
-// Fungsi untuk menghapus kelas beserta relasinya
 export async function deleteKelas(
     kelasId: string,
     gedungId: string,
@@ -450,7 +396,6 @@ export async function deleteKelas(
     error?: string
 }> {
     try {
-        // Ambil data kelas untuk konfirmasi
         const kelasRef = ref(
             database,
             `gedung/${gedungId}/kelas/${lantai}/${kelasId}`
@@ -466,7 +411,6 @@ export async function deleteKelas(
 
         const kelasData = snapshot.val()
 
-        // Hapus kelas dari gedung
         await set(kelasRef, null)
 
         toast.success(`Kelas ${kelasData.code_kelas} berhasil dihapus`, {
@@ -477,7 +421,6 @@ export async function deleteKelas(
             success: true,
         }
     } catch (error) {
-        console.error('Gagal menghapus kelas:', error)
         toast.error('Gagal menghapus kelas', {
             position: 'bottom-right',
         })
@@ -488,7 +431,6 @@ export async function deleteKelas(
     }
 }
 
-// Fungsi untuk mendapatkan detail kelas berdasarkan ID, gedung, dan lantai
 export async function getKelasById(
     kelasId: string,
     gedungId: string,

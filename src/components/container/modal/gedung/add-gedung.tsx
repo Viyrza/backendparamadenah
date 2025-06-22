@@ -48,21 +48,17 @@ export default function AddModalGedung(props: AddModalGedungProps) {
         initialState
     )
 
-    // Update input value when image is selected from bank
     const handleImageSelect = (imageUrl: string) => {
-        console.log('Received image URL in add-gedung:', imageUrl) // Debug log
         setSelectedImageUrl(imageUrl)
         setImageInputValue(imageUrl)
     }
 
-    // Update selected image when input changes manually
     const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
         setImageInputValue(value)
         setSelectedImageUrl(value)
     }
 
-    // Reset form when modal closes
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open)
         if (!open) {
@@ -201,6 +197,10 @@ export default function AddModalGedung(props: AddModalGedungProps) {
                         </p>
                     )}
                 </form>
+
+                <DialogFooter>
+                    
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )

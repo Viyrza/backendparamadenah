@@ -2,9 +2,14 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Menu, X, Home, Building, Bell, LogOut, ImageIcon } from 'lucide-react'
+import { Home, Bell, ImageIcon, LogOutIcon, Proportions } from 'lucide-react'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase/firebase.config'
+import { logoutAction } from '@/actions/admin/auth'
+import toast from 'react-hot-toast'
+import { Button } from '@/components/ui/button'
 
 interface SidebarProps {
     isMobileMenuOpen?: boolean
@@ -14,7 +19,6 @@ interface SidebarProps {
 type MenuItems = {
     name: string
     href: string
-    // icon: string
     lucideIcon?: React.ComponentType<any>
 }
 
@@ -29,16 +33,16 @@ const menuItems: MenuItems[] = [
         href: '/menu-utama/bank-image',
         lucideIcon: ImageIcon,
     },
+    {
+        name: 'Fasilitias Managament',
+        href: '/menu-utama/fasilitas',
+        lucideIcon: Proportions,
+    },
 
     {
         name: 'Notification',
         href: '/menu-utama/notification',
         lucideIcon: Bell,
-    },
-    {
-        name: 'Log Out',
-        href: '/menu-utama/logout',
-        lucideIcon: LogOut,
     },
 ]
 
@@ -47,7 +51,8 @@ export default function Sidebar({
     setIsMobileMenuOpen,
 }: SidebarProps) {
     const pathname = usePathname()
-    const [isMobile, setIsMobile] = useState(false)
+    const router = useRouter()
+    const [isMobile, setIsMobile] = useState<boolean>(false)
 
     useEffect(() => {
         const checkScreenSize = () => {
@@ -78,9 +83,17 @@ export default function Sidebar({
         }
     }, [isMobileMenuOpen, isMobile])
 
-    const toggleMobileMenu = () => {
-        if (setIsMobileMenuOpen) {
-            setIsMobileMenuOpen(!isMobileMenuOpen)
+    const handleLogout = async () => {
+        try {
+            await signOut(auth)
+            await logoutAction()
+            router.push('/auth')
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : 'Logout gagal. Silakan coba lagi.'
+            toast.error(errorMessage)
         }
     }
 
@@ -138,18 +151,23 @@ export default function Sidebar({
             </div>
 
             <div className="flex-shrink-0 p-4 border-t border-gray-700">
-                <div className="text-center">
-                    <span className="text-xs text-gray-400">
-                        © 2025 Paramadenah
-                    </span>
-                </div>
+                <div className="text-center"></div>
+            </div>
+
+            <div className="flex flex-col gap-3 px-4 justify-center items-ce">
+                <span className="text-xs text-gray-400">
+                    <p className="flex justify-center">© 2025 Paramadenah</p>
+                </span>
+                <Button onClick={handleLogout} variant="destructive">
+                    <LogOutIcon />
+                    <p>Logout</p>
+                </Button>
             </div>
         </div>
     )
 
     return (
         <>
-            {/* Desktop Sidebar */}
             <div
                 className={`${
                     isMobile ? 'hidden' : 'block'
@@ -158,7 +176,6 @@ export default function Sidebar({
                 <SidebarContent />
             </div>
 
-            {/* Mobile Sidebar Overlay */}
             {isMobile && (
                 <div
                     className={`fixed inset-0 z-50 md:hidden transition-opacity duration-300 ${
