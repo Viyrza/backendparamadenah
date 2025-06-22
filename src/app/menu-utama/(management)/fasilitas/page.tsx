@@ -171,22 +171,53 @@ export default function Page() {
                     </p>
                 </div>
                 <AddFasilitasModal refetch={refetch} />
-            </div>
+            </div>{' '}
             <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
                 className="w-full"
             >
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="all">Semua</TabsTrigger>
-                    {Object.entries(FASILITAS_CATEGORIES).map(
-                        ([key, label]) => (
-                            <TabsTrigger key={key} value={key}>
-                                {label}
-                            </TabsTrigger>
-                        )
-                    )}
-                </TabsList>
+                <div className="block md:hidden">
+                    <TabsList className="flex w-max min-w-full h-auto p-1 gap-1 overflow-x-auto">
+                        <TabsTrigger
+                            value="all"
+                            className="text-xs px-3 py-2 whitespace-nowrap flex-shrink-0"
+                        >
+                            Semua
+                        </TabsTrigger>
+                        {Object.entries(FASILITAS_CATEGORIES).map(
+                            ([key, label]) => (
+                                <TabsTrigger
+                                    key={key}
+                                    value={key}
+                                    className="text-xs px-3 py-2 whitespace-nowrap flex-shrink-0"
+                                >
+                                    {label.split(' ')[0]}
+                                </TabsTrigger>
+                            )
+                        )}
+                    </TabsList>
+                </div>
+
+                {/* Desktop: Grid layout */}
+                <div className="hidden md:block">
+                    <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+                        <TabsTrigger value="all" className="text-sm px-2 py-2">
+                            Semua
+                        </TabsTrigger>
+                        {Object.entries(FASILITAS_CATEGORIES).map(
+                            ([key, label]) => (
+                                <TabsTrigger
+                                    key={key}
+                                    value={key}
+                                    className="text-sm px-2 py-2"
+                                >
+                                    {label}
+                                </TabsTrigger>
+                            )
+                        )}
+                    </TabsList>
+                </div>
 
                 <TabsContent value="all" className="space-y-4">
                     {renderFasilitasGrid(allFasilitas)}
@@ -212,7 +243,6 @@ export default function Page() {
                     onSuccess={refetch}
                 />
             )}
-
             {selectedFasilitas && (
                 <DeleteFasilitasModal
                     fasilitas={selectedFasilitas}
