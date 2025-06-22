@@ -30,16 +30,13 @@ export default function GedungOverview() {
                 const gedungWithStats = await Promise.all(
                     allGedung.map(async (gedung: Gedung) => {
                         try {
-                            console.log(
-                                `Fetching stats for gedung ${gedung.id}...`
-                            ) // Debug log
                             const stats =
                                 await GedungKelasRelation.getGedungStatistics(
-                                    gedung.id 
+                                    gedung.id
                                 )
                             return {
                                 ...gedung,
-                                firebaseId: gedung.id, 
+                                firebaseId: gedung.id,
                                 stats,
                             }
                         } catch (error) {
@@ -97,9 +94,9 @@ export default function GedungOverview() {
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {gedungList.map((gedung) => (
+                    {gedungList.map((gedung, index) => (
                         <Card
-                            key={gedung.id}
+                            key={`gedung-${index}${gedung.id}`}
                             className="hover:shadow-lg transition-shadow"
                         >
                             <CardHeader>
@@ -131,7 +128,6 @@ export default function GedungOverview() {
                                         className="w-full h-32 object-cover rounded-lg"
                                     />
                                 )}
-
                             </CardContent>
                         </Card>
                     ))}

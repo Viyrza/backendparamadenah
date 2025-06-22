@@ -41,7 +41,7 @@ type EditModalGedungProps = {
 export default function EditModalGedung(props: EditModalGedungProps) {
     const { isOpen, setIsOpen } = useDisclosure()
     const [gedungData, setGedungData] = useState<any>(null)
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState<boolean>(false)
 
     const [state, formAction, isPending] = useActionState(
         (prevState: any, formData: FormData) =>
@@ -49,7 +49,6 @@ export default function EditModalGedung(props: EditModalGedungProps) {
         initialState
     )
 
-    // Fetch gedung data when modal opens
     useEffect(() => {
         if (isOpen && props.gedungId) {
             const fetchGedungData = async () => {

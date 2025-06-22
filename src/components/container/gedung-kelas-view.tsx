@@ -15,32 +15,38 @@ import DeleteModalKelas from '@/components/container/modal/kelas/delete-kelas'
 import { Building, Users, Tv, BookOpen, Plus } from 'lucide-react'
 import { Pagination } from '@/components/ui/pagination'
 
-interface GedungKelasViewProps {
+type GedungKelasViewProps = {
     gedungSlug: string
 }
 
-export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
+type StatisticsState = {
+    totalKelas: number
+    totalKapasitas: number
+    totalPapanTulis: number
+    totalTelevisi: number
+}
+
+export default function GedungKelasView(props: GedungKelasViewProps) {
     const [gedung, setGedung] = useState<any>(null)
     const [kelasList, setKelasList] = useState<Kelas[]>([])
-    const [statistics, setStatistics] = useState({
+    const [statistics, setStatistics] = useState<StatisticsState>({
         totalKelas: 0,
         totalKapasitas: 0,
         totalPapanTulis: 0,
         totalTelevisi: 0,
     })
-    const [loading, setLoading] = useState(true)
-    const [currentPage, setCurrentPage] = useState(1)
-    const [totalPages, setTotalPages] = useState(0)
-    const [total, setTotal] = useState(0)
-    const [hasNextPage, setHasNextPage] = useState(false)
-    const [hasPrevPage, setHasPrevPage] = useState(false)
+    const [loading, setLoading] = useState<boolean>(true)
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [totalPages, setTotalPages] = useState<number>(0)
+    const [total, setTotal] = useState<number>(0)
+    const [hasNextPage, setHasNextPage] = useState<boolean>(false)
+    const [hasPrevPage, setHasPrevPage] = useState<boolean>(false)
 
     const fetchData = async (page: number = 1) => {
         try {
             setLoading(true)
 
-            // Fetch gedung details by slug
-            const gedungData = await getGedungBySlug(gedungSlug)
+            const gedungData = await getGedungBySlug(props.gedungSlug)
 
             if (!gedungData) {
                 console.error('Gedung not found')
@@ -50,7 +56,6 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
 
             setGedung(gedungData)
 
-            // Fetch kelas details using firebaseId with pagination
             const kelasResponse =
                 await GedungKelasRelation.getDetailedKelasByGedung(
                     gedungData.firebaseId,
@@ -65,7 +70,6 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
             setHasPrevPage(kelasResponse.hasPrevPage ?? false)
             setCurrentPage(kelasResponse.currentPage)
 
-            // Fetch statistics
             const stats = await GedungKelasRelation.getGedungStatistics(
                 gedungData.firebaseId
             )
@@ -78,10 +82,10 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
     }
 
     useEffect(() => {
-        if (gedungSlug) {
+        if (props.gedungSlug) {
             fetchData()
         }
-    }, [gedungSlug])
+    }, [props.gedungSlug])
 
     if (loading) {
         return (
@@ -101,7 +105,6 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
 
     return (
         <div className="space-y-6">
-            {/* Gedung Information */}
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
@@ -131,7 +134,6 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
                     )}
                 </CardContent>
             </Card>
-            {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                     <CardContent className="p-4">
@@ -197,7 +199,7 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
                     </CardContent>
                 </Card>
             </div>
-            {/* Kelas List */}
+            
             <Card>
                 <CardHeader>
                     <CardTitle>Daftar Kelas di Gedung Ini</CardTitle>
@@ -220,7 +222,9 @@ export default function GedungKelasView({ gedungSlug }: GedungKelasViewProps) {
                                                 <h4 className="font-semibold text-lg">
                                                     {kelas.code_kelas}
                                                 </h4>{' '}
-                                                <div className="flex gap-1">                                                    <EditModalKelas
+                                                <div className="flex gap-1">
+                                                    {' '}
+                                                    <EditModalKelas
                                                         kelasId={
                                                             kelas.firebaseId ||
                                                             ''

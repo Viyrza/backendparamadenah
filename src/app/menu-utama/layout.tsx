@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import Sidebar from './sidebar'
 import AppHeader from '../../components/container/header'
+import { Toaster } from 'react-hot-toast'
 
 export default function MenuUtamaLayout({
     children,
@@ -18,21 +19,18 @@ export default function MenuUtamaLayout({
 
     return (
         <div className="flex h-screen overflow-hidden bg-gray-50">
-            {/* Header */}
             <AppHeader
                 onMobileMenuToggle={toggleMobileMenu}
                 isMobileMenuOpen={isMobileMenuOpen}
             />
 
-            {/* Sidebar */}
             <Sidebar
                 isMobileMenuOpen={isMobileMenuOpen}
                 setIsMobileMenuOpen={setIsMobileMenuOpen}
             />
 
-            {/* Main Content */}
             <main className="flex-1 flex flex-col md:ml-64">
-                {/* Content Area with proper spacing for header */}
+                <Toaster />
                 <div className="flex-1 overflow-y-auto pt-16 md:pt-16">
                     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
                         {children}

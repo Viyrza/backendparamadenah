@@ -46,7 +46,6 @@ export default function AddModalKelas(props: AddModalKelasProps) {
         initialState
     )
 
-    // Fetch gedung list when component mounts
     useEffect(() => {
         const fetchGedung = async () => {
             try {

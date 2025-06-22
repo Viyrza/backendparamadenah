@@ -62,7 +62,7 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                 formData
             ),
         initialState
-    ) // Fetch kelas data when modal opens
+    )
     useEffect(() => {
         if (isOpen) {
             const fetchData = async () => {
@@ -114,13 +114,11 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                         </div>
                     ) : (
                         <div className="space-y-3 max-h-96 overflow-y-auto p-2">
-                            {/* Hidden input for gedung_id - keep existing gedung */}
                             <input
                                 type="hidden"
                                 name="gedung_id"
                                 value={props.gedungId}
                             />
-                            {/* Display gedung info (read-only) */}
                             <div>
                                 <Label>Gedung</Label>
                                 <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50">

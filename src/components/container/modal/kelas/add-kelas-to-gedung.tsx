@@ -59,7 +59,7 @@ export default function AddKelasToGedungModal(
     useEffect(() => {
         if (state.success) {
             setIsOpen(false)
-            setSelectedImageUrl('') // Reset selected image
+            setSelectedImageUrl('')
             props.refetch?.()
         }
     }, [state.success, setIsOpen, props])
@@ -85,7 +85,6 @@ export default function AddKelasToGedungModal(
                     </DialogHeader>
 
                     <div className="space-y-3 max-h-96 overflow-y-auto p-2">
-                        {/* Hidden input untuk gedung_id */}
                         <input
                             type="hidden"
                             name="gedung_id"

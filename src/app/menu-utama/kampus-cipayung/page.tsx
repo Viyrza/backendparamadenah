@@ -24,17 +24,19 @@ type Gedung = {
 export default function Page() {
     const router = useRouter()
     const [gedungList, setGedungList] = useState<Gedung[]>([])
-    const [loading, setLoading] = useState(true)
-    const [currentPage, setCurrentPage] = useState(1)
-    const [totalPages, setTotalPages] = useState(0)
-    const [total, setTotal] = useState(0)
-    const [, setHasNextPage] = useState(false)
-    const [, setHasPrevPage] = useState(false)
+    const [loading, setLoading] = useState<boolean>(true)
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [totalPages, setTotalPages] = useState<number>(0)
+    const [total, setTotal] = useState<number>(0)
+    const [, setHasNextPage] = useState<boolean>(false)
+    const [, setHasPrevPage] = useState<boolean>(false)
 
     const fetchData = async (page: number = 1) => {
         try {
             setLoading(true)
+
             const response = await getKampusPaginated(page, 5)
+
             setGedungList(response.data)
             setCurrentPage(response.currentPage)
             setTotalPages(response.totalPages)
@@ -66,7 +68,9 @@ export default function Page() {
                             Kembali
                         </span>
                     </Button>
-                    <AddModalGedung refetch={refetch} />
+                    <div className="flex gap-2">
+                        <AddModalGedung refetch={refetch} />
+                    </div>
                 </div>
 
                 <Tabs defaultValue="overview" className="w-full">
@@ -91,34 +95,40 @@ export default function Page() {
                                 { key: 'kode_gedung', title: 'Kode Gedung' },
                                 { key: 'action', title: 'Action' },
                             ]}
-                            rows={gedungList.map((item: Gedung) => ({
-                                id: Number(item.id),
-                                name: item.name,
-                                image: (
-                                    <img
-                                        src={
-                                            item.image ||
-                                            'https://via.placeholder.com/80x40'
-                                        }
-                                        alt={item.name}
-                                        className="w-20 h-12 object-cover rounded-md"
-                                    />
-                                ),
-                                kode_gedung: item.kode_gedung,
-                                action: (
-                                    <div className="flex items-center gap-2">
-                                        <EditModalGedung
-                                            gedungId={item.firebaseId}
-                                            refetch={refetch}
+                            rows={gedungList.map((item: Gedung) => {
+                                return {
+                                    id: Number(item.id),
+                                    name: item.name || 'N/A',
+                                    image: (
+                                        <img
+                                            src={
+                                                item.image ||
+                                                'https://via.placeholder.com/80x40'
+                                            }
+                                            alt={item.name || 'No name'}
+                                            className="w-20 h-12 object-cover rounded-md"
+                                            onError={(e) => {
+                                                e.currentTarget.src =
+                                                    'https://via.placeholder.com/80x40'
+                                            }}
                                         />
-                                        <DeleteModalGedung
-                                            gedungId={item.firebaseId}
-                                            gedungName={item.name}
-                                            refetch={refetch}
-                                        />
-                                    </div>
-                                ),
-                            }))}
+                                    ),
+                                    kode_gedung: item.kode_gedung || 'N/A',
+                                    action: (
+                                        <div className="flex items-center gap-2">
+                                            <EditModalGedung
+                                                gedungId={item.firebaseId}
+                                                refetch={refetch}
+                                            />
+                                            <DeleteModalGedung
+                                                gedungId={item.firebaseId}
+                                                gedungName={item.name}
+                                                refetch={refetch}
+                                            />
+                                        </div>
+                                    ),
+                                }
+                            })}
                             isLoading={loading}
                             pagination={{
                                 currentPage,

@@ -71,69 +71,69 @@ export async function DELETE(
     }
 }
 
-export async function PATCH(
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const { id } = await params
-        const encodedPublicId = id
-        const publicId = decodeURIComponent(encodedPublicId)
+// export async function PATCH(
+//     request: NextRequest,
+//     { params }: { params: Promise<{ id: string }> }
+// ) {
+//     try {
+//         const { id } = await params
+//         const encodedPublicId = id
+//         const publicId = decodeURIComponent(encodedPublicId)
 
-        if (!publicId) {
-            return NextResponse.json(
-                { success: false, error: 'Missing image ID' },
-                { status: 400 }
-            )
-        }
+//         if (!publicId) {
+//             return NextResponse.json(
+//                 { success: false, error: 'Missing image ID' },
+//                 { status: 400 }
+//             )
+//         }
 
-        const body = await request.json()
-        const { name, description, tags } = body
+//         const body = await request.json()
+//         const { name, description, tags } = body
 
-        const context = {
-            alt: description || '',
-            caption: name || '',
-        }
+//         const context = {
+//             alt: description || '',
+//             caption: name || '',
+//         }
 
-        const result = await cloudinary.uploader.explicit(publicId, {
-            type: 'upload',
-            context: context,
-            tags: tags || [],
-            public_id: publicId,
-        })
+//         const result = await cloudinary.uploader.explicit(publicId, {
+//             type: 'upload',
+//             context: context,
+//             tags: tags || [],
+//             public_id: publicId,
+//         })
 
-        if (!result) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Failed to update image metadata',
-                    publicId: publicId,
-                },
-                { status: 500 }
-            )
-        }
+//         if (!result) {
+//             return NextResponse.json(
+//                 {
+//                     success: false,
+//                     error: 'Failed to update image metadata',
+//                     publicId: publicId,
+//                 },
+//                 { status: 500 }
+//             )
+//         }
 
-        return NextResponse.json({
-            success: true,
-            message: 'Image metadata updated successfully',
-            data: {
-                id: result.public_id,
-                name: name,
-                description: description,
-                tags: tags,
-                url: result.secured_url || result.secure_url,
-                updatedAt: new Date().toISOString(),
-            },
-        })
-    } catch (error) {
-        console.error('Update error:', error)
-        return NextResponse.json(
-            {
-                success: false,
-                error: error instanceof Error ? error.message : 'Update failed',
-                details: error instanceof Error ? error.stack : undefined,
-            },
-            { status: 500 }
-        )
-    }
-}
+//         return NextResponse.json({
+//             success: true,
+//             message: 'Image metadata updated successfully',
+//             data: {
+//                 id: result.public_id,
+//                 name: name,
+//                 description: description,
+//                 tags: tags,
+//                 url: result.secured_url || result.secure_url,
+//                 updatedAt: new Date().toISOString(),
+//             },
+//         })
+//     } catch (error) {
+//         console.error('Update error:', error)
+//         return NextResponse.json(
+//             {
+//                 success: false,
+//                 error: error instanceof Error ? error.message : 'Update failed',
+//                 details: error instanceof Error ? error.stack : undefined,
+//             },
+//             { status: 500 }
+//         )
+//     }
+// }
