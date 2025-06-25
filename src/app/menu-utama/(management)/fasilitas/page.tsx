@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -17,6 +18,7 @@ import {
     type FasilitasCategory,
 } from '@/lib/constants/fasilitas'
 import Image from 'next/image'
+import AddFasilitasItemModal from '@/components/container/modal/fasilitas/add-fasilitas-item'
 
 interface Fasilitas {
     id: number
@@ -39,6 +41,7 @@ export default function Page() {
         useState<Fasilitas | null>(null)
     const [editModalOpen, setEditModalOpen] = useState<boolean>(false)
     const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
+    const router = useRouter();
 
     const fetchFasilitas = async () => {
         try {
@@ -100,6 +103,7 @@ export default function Page() {
                 </div>
             ) : (
                 fasilitasList.map((fasilitas) => (
+                    
                     <Card
                         key={`${fasilitas.category}-${fasilitas.slug}`}
                         className="hover:shadow-lg transition-shadow overflow-hidden"
@@ -109,7 +113,7 @@ export default function Page() {
                                 <Image
                                     src={fasilitas.imageUrl}
                                     alt={fasilitas.name}
-                                    className=" w-full h-full aspect-video"
+                                    className="w-full h-full aspect-video"
                                     width={0}
                                     height={0}
                                     sizes="100%"
@@ -137,7 +141,7 @@ export default function Page() {
                         <CardContent>
                             <p className="text-gray-600 text-sm line-clamp-3 mb-4">
                                 {fasilitas.description}
-                            </p>{' '}
+                            </p>
                             <div className="flex justify-end space-x-2">
                                 <Button
                                     variant="outline"
@@ -153,6 +157,8 @@ export default function Page() {
                                 >
                                     Hapus
                                 </Button>
+                                
+                                 <AddFasilitasItemModal />
                             </div>
                         </CardContent>
                     </Card>
@@ -255,6 +261,8 @@ export default function Page() {
                     }}
                 />
             )}
+
+         
         </div>
     )
 }

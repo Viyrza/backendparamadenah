@@ -96,7 +96,7 @@ export default function EditModalKelas(props: EditModalKelasProps) {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <Button
                 onClick={() => setIsOpen(true)}
-                className="bg-slate-800 hover:bg-slate-700"
+                className="bg-background_primary hover:bg-slate-700"
                 size="sm"
             >
                 <Pencil className="h-4 w-4" />
@@ -315,7 +315,7 @@ export default function EditModalKelas(props: EditModalKelasProps) {
                         <Button
                             type="submit"
                             disabled={isPending || loading}
-                            className="bg-slate-800 hover:bg-slate-700"
+                            className="bg-background_primary hover:bg-slate-700"
                         >
                             {isPending ? 'Menyimpan...' : 'Update Kelas'}
                         </Button>

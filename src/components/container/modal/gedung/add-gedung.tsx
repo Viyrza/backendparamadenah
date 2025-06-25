@@ -73,7 +73,7 @@ export default function AddModalGedung(props: AddModalGedungProps) {
                 <Button
                     variant="default"
                     size="lg"
-                    className="bg-slate-800 hover:bg-slate-700"
+                    className="bg-background_primary hover:bg-slate-700"
                 >
                     <p className="hidden md:block">Add Gedung</p>
                     <Plus />

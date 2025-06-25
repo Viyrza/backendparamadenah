@@ -44,6 +44,12 @@ const menuItems: MenuItems[] = [
         href: '/menu-utama/notification',
         lucideIcon: Bell,
     },
+
+    {
+        name : 'User Management',
+        href: '/menu-utama/user',
+        lucideIcon: Home,
+    }
 ]
 
 export default function Sidebar({
@@ -171,7 +177,7 @@ export default function Sidebar({
             <div
                 className={`${
                     isMobile ? 'hidden' : 'block'
-                } w-64 h-full bg-gray-800 text-white shadow-xl transition-all duration-300 ease-in-out fixed left-0 top-0 z-20`}
+                } w-64 h-full bg-background_primary text-white shadow-xl transition-all duration-300 ease-in-out fixed left-0 top-0 z-20`}
             >
                 <SidebarContent />
             </div>
