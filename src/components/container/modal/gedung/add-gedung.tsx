@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -13,194 +13,282 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useDisclosure } from '@/hooks/use-disclosure'
-import { Plus } from 'lucide-react'
-import { createGedung } from '@/actions/admin/gedung'
-import BankImageSelector from '../../bank-image-selector'
+import BankImageSelector from '@/components/container/bank-image-selector'
+import { Plus, X, Image as ImageIcon } from 'lucide-react'
 
-const initialState:
-    | { success: true; id: string | null }
-    | {
-          success: false
-          error: {
-              fieldErrors?: {
-                  name?: string[]
-                  image?: string[]
-                  kode_gedung?: string[]
-              }
-          }
-      } = {
-    success: false,
-    error: {
-        fieldErrors: {},
-    },
+type AddKelasToGedungModalProps = {
+    gedungId: string
+    gedungName: string
+    refetch: (page?: number) => void
 }
 
-type AddModalGedungProps = {
-    refetch: () => void
+type KelasFormError = {
+    fieldErrors?: {
+        code_kelas?: string[]
+        kapasitas_orang?: string[]
+        total_papan_tulis?: string[]
+        total_televisi?: string[]
+        lantai?: string[]
+        gedung_id?: string[]
+        images?: string[]
+        denah_image?: string[]
+    }
 }
 
-export default function AddModalGedung(props: AddModalGedungProps) {
+export default function AddKelasToGedungModal({
+    gedungId,
+    gedungName,
+    refetch,
+}: AddKelasToGedungModalProps) {
     const { isOpen, setIsOpen } = useDisclosure()
-    const [selectedImageUrl, setSelectedImageUrl] = useState('')
-    const [imageInputValue, setImageInputValue] = useState('')
-    const [state, formAction, isPending] = useActionState(
-        createGedung,
-        initialState
-    )
+    const [imageUrls, setImageUrls] = useState<string[]>([''])
+    const [denahUrl, setDenahUrl] = useState<string>('') // hanya 1 denah
+    const [showBankImage, setShowBankImage] = useState(false)
+    const [showBankDenah, setShowBankDenah] = useState(false) // untuk denah
+    const [formValues, setFormValues] = useState({
+        code_kelas: '',
+        lantai: '',
+        kapasitas_orang: 1,
+        total_papan_tulis: 1,
+        total_televisi: 1,
+    })
+    const [errors, setErrors] = useState<KelasFormError>({})
+    const [isPending, setIsPending] = useState(false)
 
-    const handleImageSelect = (imageUrl: string) => {
-        setSelectedImageUrl(imageUrl)
-        setImageInputValue(imageUrl)
+    useEffect(() => {
+        if (!isOpen) resetForm()
+    }, [isOpen])
+
+    const resetForm = () => {
+        setImageUrls([''])
+        setDenahUrl('')
+        setFormValues({
+            code_kelas: '',
+            lantai: '',
+            kapasitas_orang: 1,
+            total_papan_tulis: 1,
+            total_televisi: 1,
+        })
+        setErrors({})
     }
 
-    const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value
-        setImageInputValue(value)
-        setSelectedImageUrl(value)
+    const handleAddImage = () => setImageUrls(prev => [...prev, ''])
+    const handleRemoveImage = (idx: number) =>
+        setImageUrls(prev => prev.filter((_, i) => i !== idx))
+    const handleChangeImage = (idx: number, value: string) =>
+        setImageUrls(prev => prev.map((url, i) => (i === idx ? value : url)))
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) => {
+        const { name, value } = e.target
+        setFormValues(prev => ({
+            ...prev,
+            [name]: name.startsWith('kapasitas') || name.startsWith('total_')
+                ? Number(value)
+                : value,
+        }))
     }
 
-    const handleOpenChange = (open: boolean) => {
-        setIsOpen(open)
-        if (!open) {
-            setSelectedImageUrl('')
-            setImageInputValue('')
+    const handleAddFromBankImage = (url: string) => {
+        if (!imageUrls.includes(url)) {
+            setImageUrls(prev => [...prev, url])
+        }
+        setShowBankImage(false)
+    }
+
+    const handleAddFromBankDenah = (url: string) => {
+        setDenahUrl(url)
+        setShowBankDenah(false)
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setIsPending(true)
+        setErrors({})
+
+        const formData = new FormData()
+        formData.append('gedung_id', gedungId)
+        formData.append('code_kelas', formValues.code_kelas)
+        formData.append('lantai', formValues.lantai)
+        formData.append('kapasitas_orang', String(formValues.kapasitas_orang))
+        formData.append('total_papan_tulis', String(formValues.total_papan_tulis))
+        formData.append('total_televisi', String(formValues.total_televisi))
+        imageUrls.filter(Boolean).forEach(img => formData.append('images[]', img))
+        if (denahUrl) formData.append('denah_image', denahUrl)
+
+        try {
+            const res = await fetch('/api/kelas', {
+                method: 'POST',
+                body: formData,
+            })
+
+            const result = await res.json()
+            if (result.success) {
+                setIsOpen(false)
+                refetch?.()
+            } else {
+                setErrors(result.error || {})
+            }
+        } catch (err) {
+            console.error('❌ Error saat submit kelas:', err)
+            setErrors({
+                fieldErrors: {
+                    code_kelas: ['Terjadi kesalahan pada sistem. Silakan coba lagi.'],
+                },
+            })
+        } finally {
+            setIsPending(false)
         }
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button
-                    variant="default"
-                    size="lg"
-                    className="bg-background_primary hover:bg-slate-700"
-                >
-                    <p className="hidden md:block">Add Gedung</p>
-                    <Plus />
+                <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tambah Kelas
                 </Button>
             </DialogTrigger>
-
             <DialogContent aria-describedby={undefined}>
-                <form action={formAction} className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add New Gedung</DialogTitle>
+                        <DialogTitle>Tambah Kelas ke {gedungName}</DialogTitle>
                     </DialogHeader>
-
-                    <div>
-                        <Label>Name</Label>
-                        <Input name="name" type="text" required />
-                        {!state.success && state.error?.fieldErrors?.name && (
-                            <p className="text-sm text-red-500">
-                                {state.error.fieldErrors.name[0]}
-                            </p>
-                        )}
-                    </div>
-                    <div>
-                        <Label>Code Gedung (Gedung A)</Label>
-                        <Input name="kode_gedung" type="text" required />
-                        {!state.success &&
-                            state.error?.fieldErrors?.kode_gedung && (
-                                <p className="text-sm text-red-500">
-                                    {state.error.fieldErrors.kode_gedung[0]}
-                                </p>
-                            )}
-                    </div>
-
-                    <div className="space-y-3">
-                        <Label>Image URL</Label>
-                        <Input
-                            name="image"
-                            type="url"
-                            placeholder="Masukkan URL gambar atau pilih dari bank"
-                            value={imageInputValue}
-                            onChange={handleImageInputChange}
-                        />
-                        {!state.success && state.error?.fieldErrors?.image && (
-                            <p className="text-sm text-red-500">
-                                {state.error.fieldErrors.image[0]}
-                            </p>
-                        )}
-
-                        {/* Image Preview */}
-                        {selectedImageUrl && (
-                            <div className="mt-3">
-                                <Label className="text-sm text-gray-600 mb-2 block">
-                                    Preview:
-                                </Label>
-                                <div className="relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50">
-                                    <img
-                                        src={selectedImageUrl}
-                                        alt="Preview"
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            console.error(
-                                                'Image load error:',
-                                                selectedImageUrl
-                                            )
-                                            e.currentTarget.src =
-                                                '/placeholder-image.png'
-                                            e.currentTarget.alt =
-                                                'Error loading image'
-                                        }}
-                                        onLoad={() => {
-                                            console.log(
-                                                'Image loaded successfully:',
-                                                selectedImageUrl
-                                            )
-                                        }}
-                                    />
-                                    {/* Loading/Error fallback */}
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 opacity-0 transition-opacity">
-                                        <span className="text-gray-500 text-sm">
-                                            Loading image...
-                                        </span>
-                                    </div>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1 break-all">
-                                    URL: {selectedImageUrl}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Bank Image Selector */}
-                        <div className="pt-2">
-                            <BankImageSelector
-                                onImageSelect={handleImageSelect}
-                                selectedImageUrl={selectedImageUrl}
-                                triggerButton={
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="w-full"
-                                    >
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Pilih dari Bank Image
-                                    </Button>
-                                }
+                    <div className="space-y-3 max-h-96 overflow-y-auto p-2">
+                        <div>
+                            <Label>Code Kelas</Label>
+                            <Input
+                                name="code_kelas"
+                                required
+                                value={formValues.code_kelas}
+                                onChange={handleChange}
                             />
                         </div>
-                    </div>
+                        <div>
+                            <Label>Lantai</Label>
+                            <select
+                                name="lantai"
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                value={formValues.lantai}
+                                onChange={handleChange}
+                            >
+                                <option value="">Pilih Lantai</option>
+                                <option value="lantai_1">Lantai 1</option>
+                                <option value="lantai_2">Lantai 2</option>
+                                <option value="lantai_3">Lantai 3</option>
+                            </select>
+                        </div>
+                        <div>
+                            <Label>Kapasitas (orang)</Label>
+                            <Input
+                                name="kapasitas_orang"
+                                type="number"
+                                min="1"
+                                required
+                                value={formValues.kapasitas_orang}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div>
+                            <Label>Jumlah Papan Tulis</Label>
+                            <Input
+                                name="total_papan_tulis"
+                                type="number"
+                                min="0"
+                                required
+                                value={formValues.total_papan_tulis}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div>
+                            <Label>Jumlah Televisi</Label>
+                            <Input
+                                name="total_televisi"
+                                type="number"
+                                min="0"
+                                required
+                                value={formValues.total_televisi}
+                                onChange={handleChange}
+                            />
+                        </div>
 
+                        <div>
+                            <Label>Image (bisa lebih dari satu)</Label>
+                            {imageUrls.map((url, idx) => (
+                                <div key={idx} className="flex items-center gap-2 mb-2">
+                                    <Input
+                                        type="url"
+                                        value={url}
+                                        placeholder="https://example.com/image.jpg"
+                                        onChange={(e) => handleChangeImage(idx, e.target.value)}
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => handleRemoveImage(idx)}
+                                        disabled={imageUrls.length === 1}
+                                        className="text-red-500"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button
+                                type="button"
+                                onClick={() => setShowBankImage(true)}
+                                className="mt-2"
+                            >
+                                <ImageIcon className="w-4 h-4 mr-2" />
+                                Pilih dari Bank Image
+                            </Button>
+                        </div>
+
+                        <div>
+                            <Label>Tambah Denah Kelas</Label>
+                            {denahUrl && (
+                                <img
+                                    src={denahUrl}
+                                    alt="Denah"
+                                    className="w-20 h-20 object-cover mt-2 border rounded"
+                                />
+                            )}
+                            <Button
+                                type="button"
+                                onClick={() => setShowBankDenah(true)}
+                                className="mt-2"
+                            >
+                                <ImageIcon className="w-4 h-4 mr-2" />
+                                Pilih dari Bank Image
+                            </Button>
+                        </div>
+                    </div>
                     <DialogFooter>
-                        <Button
-                            type="submit"
-                            disabled={isPending}
-                            className="mt-4 bg-slate-800 hover:bg-slate-700"
-                        >
-                            {isPending ? 'Submitting...' : 'Submit'}
+                        <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>
+                            Batal
+                        </Button>
+                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isPending}>
+                            {isPending ? 'Menyimpan...' : 'Tambah Kelas'}
                         </Button>
                     </DialogFooter>
-
-                    {state.success && (
-                        <p className="text-sm text-green-600">
-                            Kampus berhasil ditambahkan!
-                        </p>
-                    )}
                 </form>
 
-                <DialogFooter>
-                    
-                </DialogFooter>
+                {showBankImage && (
+                    <BankImageSelector
+                        onImageSelect={handleAddFromBankImage}
+                        triggerButton={null}
+                        selectedImageUrl={null}
+                    />
+                )}
+                {showBankDenah && (
+                    <BankImageSelector
+                        onImageSelect={handleAddFromBankDenah}
+                        triggerButton={null}
+                        selectedImageUrl={null}
+                    />
+                )}
             </DialogContent>
         </Dialog>
     )

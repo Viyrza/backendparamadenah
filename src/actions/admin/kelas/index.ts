@@ -26,6 +26,7 @@ const formSchema = z.object({
         .url({ message: 'URL gambar tidak valid' })
         .optional()
         .or(z.literal('')),
+    images: z.array(z.string().url({ message: 'URL gambar tidak valid' })).optional(),
 })
 
 // Fungsi untuk membuat kelas baru
@@ -45,6 +46,7 @@ export async function createKelas(
                   lantai?: string[]
                   gedung_id?: string[]
                   image?: string[]
+                  images?: string[]
               }
           }
       }
@@ -57,6 +59,7 @@ export async function createKelas(
         lantai: formData.get('lantai'),
         gedung_id: formData.get('gedung_id'),
         image: formData.get('image') || '',
+        images: formData.getAll('images[]').filter(Boolean), // Ambil array gambar
     })
 
     if (!parsed.success) {
@@ -105,6 +108,7 @@ export async function createKelas(
             lantai: data.lantai,
             gedung_id: data.gedung_id,
             image: data.image || null,
+            images: data.images && data.images.length > 0 ? data.images : undefined,
             slug: slugify(`${data.code_kelas}-${data.lantai}`, { lower: true }),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -216,19 +220,21 @@ export async function getKelasByGedungId(
 
         const kelasList: any[] = []
 
-        Object.entries(data).forEach(([lantai, kelasData]: [string, any]) => {
-            if (kelasData && typeof kelasData === 'object') {
-                Object.entries(kelasData).forEach(
-                    ([id, kelas]: [string, any]) => {
-                        kelasList.push({
-                            firebaseId: id,
-                            gedungFirebaseId: gedungId,
-                            ...kelas,
-                        })
-                    }
-                )
+        Object.entries(data).forEach(
+            ([lantai, kelasData]: [string, any]) => {
+                if (kelasData && typeof kelasData === 'object') {
+                    Object.entries(kelasData).forEach(
+                        ([id, kelas]: [string, any]) => {
+                            kelasList.push({
+                                firebaseId: id,
+                                gedungFirebaseId: gedungId,
+                                ...kelas,
+                            })
+                        }
+                    )
+                }
             }
-        })
+        )
 
         kelasList.sort(
             (a, b) =>
@@ -275,6 +281,7 @@ const updateKelasSchema = z.object({
         .url({ message: 'URL gambar tidak valid' })
         .optional()
         .or(z.literal('')),
+    images: z.array(z.string().url({ message: 'URL gambar tidak valid' })).optional(),
 })
 
 export async function updateKelas(
@@ -296,6 +303,7 @@ export async function updateKelas(
                   lantai?: string[]
                   gedung_id?: string[]
                   image?: string[]
+                  images?: string[]
               }
           }
       }
@@ -308,6 +316,7 @@ export async function updateKelas(
         lantai: formData.get('lantai'),
         gedung_id: formData.get('gedung_id'),
         image: formData.get('image') || '',
+        images: formData.getAll('images[]').filter(Boolean),
     })
 
     if (!parsed.success) {
@@ -348,6 +357,7 @@ export async function updateKelas(
             lantai: data.lantai,
             gedung_id: oldGedungId,
             image: data.image || null,
+            images: data.images && data.images.length > 0 ? data.images : undefined,
             slug: slugify(`${data.code_kelas}-${data.lantai}`, { lower: true }),
             updated_at: new Date().toISOString(),
         }
@@ -456,4 +466,13 @@ export async function getKelasById(
         console.error('Gagal ambil data kelas:', error)
         return null
     }
+}
+
+export {
+    createKelas,
+    updateKelas,
+    deleteKelas,
+    getKelasById,
+    getAllKelas,
+    getKelasByGedungId,
 }

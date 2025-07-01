@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -13,31 +13,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useDisclosure } from '@/hooks/use-disclosure'
-import { Plus } from 'lucide-react'
-import { createKelas } from '@/actions/admin/kelas'
 import BankImageSelector from '@/components/container/bank-image-selector'
-
-const initialState:
-    | { success: true; id: string | null }
-    | {
-          success: false
-          error: {
-              fieldErrors?: {
-                  code_kelas?: string[]
-                  kapasitas_orang?: string[]
-                  total_papan_tulis?: string[]
-                  total_televisi?: string[]
-                  lantai?: string[]
-                  gedung_id?: string[]
-                  image?: string[]
-              }
-          }
-      } = {
-    success: false,
-    error: {
-        fieldErrors: {},
-    },
-}
+import { Plus, X, Image as ImageIcon } from 'lucide-react'
 
 type AddKelasToGedungModalProps = {
     gedungId: string
@@ -45,77 +22,167 @@ type AddKelasToGedungModalProps = {
     refetch: (page?: number) => void
 }
 
-export default function AddKelasToGedungModal(
-    props: AddKelasToGedungModalProps
-) {
-    const { isOpen, setIsOpen } = useDisclosure()
-    const [selectedImageUrl, setSelectedImageUrl] = useState('')
+type KelasFormError = {
+    fieldErrors?: {
+        code_kelas?: string[]
+        kapasitas_orang?: string[]
+        total_papan_tulis?: string[]
+        total_televisi?: string[]
+        lantai?: string[]
+        gedung_id?: string[]
+        images?: string[]
+        denah_images?: string[]
+    }
+}
 
-    const [state, formAction, isPending] = useActionState(
-        createKelas,
-        initialState
-    )
+export default function AddKelasToGedungModal({
+    gedungId,
+    gedungName,
+    refetch,
+}: AddKelasToGedungModalProps) {
+    const { isOpen, setIsOpen } = useDisclosure()
+    const [imageUrls, setImageUrls] = useState<string[]>([''])
+    const [denahUrls, setDenahUrls] = useState<string[]>([])
+    const [showBankImage, setShowBankImage] = useState(false)
+    const [showBankDenah, setShowBankDenah] = useState(false)
+    const [formValues, setFormValues] = useState({
+        code_kelas: '',
+        lantai: '',
+        kapasitas_orang: 1,
+        total_papan_tulis: 1,
+        total_televisi: 1,
+    })
+    const [errors, setErrors] = useState<KelasFormError>({})
+    const [isPending, setIsPending] = useState(false)
 
     useEffect(() => {
-        if (state.success) {
-            setIsOpen(false)
-            setSelectedImageUrl('')
-            props.refetch?.()
+        if (!isOpen) resetForm()
+    }, [isOpen])
+
+    const resetForm = () => {
+        setImageUrls([''])
+        setDenahUrls([])
+        setFormValues({
+            code_kelas: '',
+            lantai: '',
+            kapasitas_orang: 1,
+            total_papan_tulis: 1,
+            total_televisi: 1,
+        })
+        setErrors({})
+    }
+
+    const handleAddImage = () => setImageUrls(prev => [...prev, ''])
+    const handleRemoveImage = (idx: number) =>
+        setImageUrls(prev => prev.filter((_, i) => i !== idx))
+    const handleChangeImage = (idx: number, value: string) =>
+        setImageUrls(prev => prev.map((url, i) => (i === idx ? value : url)))
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) => {
+        const { name, value } = e.target
+        setFormValues(prev => ({
+            ...prev,
+            [name]: name.startsWith('kapasitas') || name.startsWith('total_')
+                ? Number(value)
+                : value,
+        }))
+    }
+
+    const handleAddFromBankImage = (url: string) => {
+        if (!imageUrls.includes(url)) {
+            setImageUrls(prev => [...prev, url])
         }
-    }, [state.success, setIsOpen, props])
+        setShowBankImage(false)
+    }
+
+    const handleAddDenahFromBank = (url: string) => {
+        if (!denahUrls.includes(url)) {
+            setDenahUrls(prev => [...prev, url])
+        }
+        setShowBankDenah(false)
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setIsPending(true)
+        setErrors({})
+
+        const formData = new FormData()
+        formData.append('gedung_id', gedungId)
+        formData.append('code_kelas', formValues.code_kelas)
+        formData.append('lantai', formValues.lantai)
+        formData.append('kapasitas_orang', String(formValues.kapasitas_orang))
+        formData.append('total_papan_tulis', String(formValues.total_papan_tulis))
+        formData.append('total_televisi', String(formValues.total_televisi))
+
+        imageUrls.filter(Boolean).forEach((img) =>
+            formData.append('images[]', img)
+        )
+
+        denahUrls.filter(Boolean).forEach((img) =>
+            formData.append('denah_images[]', img)
+        )
+
+        try {
+            const res = await fetch('/api/kelas', {
+                method: 'POST',
+                body: formData,
+            })
+
+            const result = await res.json()
+
+            if (result.success) {
+                setIsOpen(false)
+                refetch?.()
+            } else {
+                setErrors(result.error || {})
+            }
+        } catch (err) {
+            console.error('❌ Error saat submit kelas:', err)
+            setErrors({
+                fieldErrors: {
+                    code_kelas: ['Terjadi kesalahan pada sistem. Silakan coba lagi.'],
+                },
+            })
+        } finally {
+            setIsPending(false)
+        }
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button
-                    variant="default"
-                    className="bg-blue-600 hover:bg-blue-700"
-                >
+                <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
                     <Plus className="h-4 w-4 mr-2" />
                     Tambah Kelas
                 </Button>
             </DialogTrigger>
-
             <DialogContent aria-describedby={undefined}>
-                <form action={formAction} className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>
-                            Tambah Kelas ke {props.gedungName}
-                        </DialogTitle>
+                        <DialogTitle>Tambah Kelas ke {gedungName}</DialogTitle>
                     </DialogHeader>
-
                     <div className="space-y-3 max-h-96 overflow-y-auto p-2">
-                        <input
-                            type="hidden"
-                            name="gedung_id"
-                            value={props.gedungId}
-                        />
                         <div>
                             <Label>Code Kelas</Label>
                             <Input
                                 name="code_kelas"
                                 type="text"
-                                placeholder="contoh A1-1"
                                 required
+                                value={formValues.code_kelas}
+                                onChange={handleChange}
                             />
-                            {!state.success &&
-                                state.error?.fieldErrors?.code_kelas?.map(
-                                    (error, index) => (
-                                        <p
-                                            key={index}
-                                            className="text-sm text-red-500"
-                                        >
-                                            {error}
-                                        </p>
-                                    )
-                                )}
                         </div>
                         <div>
                             <Label>Lantai</Label>
                             <select
                                 name="lantai"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                value={formValues.lantai}
+                                onChange={handleChange}
                             >
                                 <option value="">Pilih Lantai</option>
                                 <option value="lantai_1">Lantai 1</option>
@@ -124,162 +191,134 @@ export default function AddKelasToGedungModal(
                                 <option value="lantai_4">Lantai 4</option>
                                 <option value="lantai_5">Lantai 5</option>
                             </select>
-                            {!state.success &&
-                                state.error?.fieldErrors?.lantai?.map(
-                                    (error, index) => (
-                                        <p
-                                            key={index}
-                                            className="text-sm text-red-500"
-                                        >
-                                            {error}
-                                        </p>
-                                    )
-                                )}
                         </div>
                         <div>
                             <Label>Kapasitas (orang)</Label>
                             <Input
                                 name="kapasitas_orang"
                                 type="number"
-                                placeholder="Masukan kapasitas ruangan"
                                 min="1"
                                 required
+                                value={formValues.kapasitas_orang}
+                                onChange={handleChange}
                             />
-                            {!state.success &&
-                                state.error?.fieldErrors?.kapasitas_orang?.map(
-                                    (error, index) => (
-                                        <p
-                                            key={index}
-                                            className="text-sm text-red-500"
-                                        >
-                                            {error}
-                                        </p>
-                                    )
-                                )}
                         </div>
                         <div>
                             <Label>Jumlah Papan Tulis</Label>
                             <Input
                                 name="total_papan_tulis"
                                 type="number"
-                                placeholder="masukan jumlah papan tulis"
                                 min="0"
-                                defaultValue="1"
                                 required
+                                value={formValues.total_papan_tulis}
+                                onChange={handleChange}
                             />
-                            {!state.success &&
-                                state.error?.fieldErrors?.total_papan_tulis?.map(
-                                    (error, index) => (
-                                        <p
-                                            key={index}
-                                            className="text-sm text-red-500"
-                                        >
-                                            {error}
-                                        </p>
-                                    )
-                                )}
                         </div>
                         <div>
                             <Label>Jumlah Televisi</Label>
                             <Input
                                 name="total_televisi"
                                 type="number"
-                                placeholder="masukan jumlah televisi"
                                 min="0"
-                                defaultValue="1"
                                 required
+                                value={formValues.total_televisi}
+                                onChange={handleChange}
                             />
-                            {!state.success &&
-                                state.error?.fieldErrors?.total_televisi?.map(
-                                    (error, index) => (
-                                        <p
-                                            key={index}
-                                            className="text-sm text-red-500"
-                                        >
-                                            {error}
-                                        </p>
-                                    )
-                                )}
-                        </div>{' '}
+                        </div>
+
+                        {/* Images */}
                         <div>
-                            <Label>Image (Optional)</Label>
-                            <div className="space-y-2">
-                                {/* Hidden input for form submission */}
-                                <input
-                                    type="hidden"
-                                    name="image"
-                                    value={selectedImageUrl}
-                                />
-
-                                {/* URL Input */}
-                                <Input
-                                    type="url"
-                                    placeholder="atau masukkan URL langsung"
-                                    value={selectedImageUrl}
-                                    onChange={(e) =>
-                                        setSelectedImageUrl(e.target.value)
-                                    }
-                                />
-
-                                {/* Bank Image Selector */}
-                                <BankImageSelector
-                                    onImageSelect={setSelectedImageUrl}
-                                    selectedImageUrl={selectedImageUrl}
-                                />
-
-                                {/* Preview */}
-                                {selectedImageUrl && (
-                                    <div className="mt-2">
-                                        <img
-                                            src={selectedImageUrl}
-                                            alt="Preview"
-                                            className="w-full h-24 object-cover rounded border"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display =
-                                                    'none'
-                                            }}
-                                        />
-                                    </div>
-                                )}
+                            <Label>Image (bisa lebih dari satu)</Label>
+                            {imageUrls.map((url, idx) => (
+                                <div key={idx} className="flex items-center gap-2 mb-2">
+                                    <Input
+                                        type="url"
+                                        value={url}
+                                        placeholder="https://example.com/image.jpg"
+                                        onChange={(e) => handleChangeImage(idx, e.target.value)}
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => handleRemoveImage(idx)}
+                                        disabled={imageUrls.length === 1}
+                                        className="text-red-500"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                            <div className="flex gap-2 mt-2">
+                                <Button type="button" onClick={handleAddImage}>
+                                    + Tambah Gambar Manual
+                                </Button>
+                                <Button type="button" onClick={() => setShowBankImage(true)}>
+                                    <ImageIcon className="w-4 h-4 mr-2" />
+                                    Pilih dari Bank Image
+                                </Button>
                             </div>
-                            {!state.success &&
-                                state.error?.fieldErrors?.image?.map(
-                                    (error, index) => (
-                                        <p
-                                            key={index}
-                                            className="text-sm text-red-500"
-                                        >
-                                            {error}
-                                        </p>
-                                    )
-                                )}
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                                {imageUrls.filter(Boolean).map((url, idx) => (
+                                    <img
+                                        key={idx}
+                                        src={url}
+                                        alt={`Image ${idx + 1}`}
+                                        className="w-20 h-20 object-cover border rounded"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Denah (Hanya dari Bank Image) */}
+                        <div>
+                            <Label>Denah Kelas (pilih dari bank image)</Label>
+                            <div className="flex gap-2 mt-2">
+                                <Button type="button" onClick={() => setShowBankDenah(true)}>
+                                    <ImageIcon className="w-4 h-4 mr-2" />
+                                    Pilih Denah dari Bank Image
+                                </Button>
+                            </div>
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                                {denahUrls.filter(Boolean).map((url, idx) => (
+                                    <img
+                                        key={idx}
+                                        src={url}
+                                        alt={`Denah ${idx + 1}`}
+                                        className="w-20 h-20 object-cover border rounded"
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsOpen(false)}
-                            disabled={isPending}
-                        >
+                        <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>
                             Batal
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={isPending}
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
+                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isPending}>
                             {isPending ? 'Menyimpan...' : 'Tambah Kelas'}
                         </Button>
                     </DialogFooter>
-
-                    {state.success && (
-                        <p className="text-sm text-green-600">
-                            Kelas berhasil ditambahkan!
-                        </p>
-                    )}
                 </form>
+
+                {/* Bank Image Selector untuk gambar biasa */}
+                {showBankImage && (
+                    <BankImageSelector
+                        onImageSelect={handleAddFromBankImage}
+                        triggerButton={null}
+                        selectedImageUrl={null}
+                    />
+                )}
+
+                {/* Bank Image Selector untuk denah */}
+                {showBankDenah && (
+                    <BankImageSelector
+                        onImageSelect={handleAddDenahFromBank}
+                        triggerButton={null}
+                        selectedImageUrl={null}
+                    />
+                )}
             </DialogContent>
         </Dialog>
     )

@@ -7,130 +7,97 @@ import { z } from 'zod'
 import type { FasilitasCategory } from '@/lib/constants/fasilitas'
 
 const formSchema = z.object({
-    name: z.string().min(3, { message: 'Nama harus minimal 3 karakter' }),
-    description: z
-        .string()
-        .min(3, { message: 'Deskripsi harus minimal 3 karakter' })
-        .max(3200, { message: 'Deskripsi maksimal 3200 karakter' }),
-    category: z.enum(
-        ['fasilitas-umum', 'lab-kelas', 'ruang-kantor', 'fasilitas-lainnya'],
-        {
-            errorMap: () => ({ message: 'Pilih kategori fasilitas' }),
-        }
-    ),
-    imageUrl: z.string().optional(),
+  name: z.string().min(3, { message: 'Nama harus minimal 3 karakter' }),
+  description: z
+    .string()
+    .min(3, { message: 'Deskripsi harus minimal 3 karakter' })
+    .max(3200, { message: 'Deskripsi maksimal 3200 karakter' }),
+  category: z.enum(
+    ['fasilitas-umum', 'lab-kelas', 'ruang-kantor', 'fasilitas-lainnya'],
+    { errorMap: () => ({ message: 'Pilih kategori fasilitas' }) }
+  ),
+  image: z.string().url().or(z.literal('')),
 })
 
 export async function createFasilitas(
-    prevState: any,
-    formData: FormData
+  prevState: any,
+  formData: FormData
 ): Promise<
-    | { success: true; id: string }
-    | {
-          success: false
-          error: {
-              fieldErrors?: {
-                  name?: string[]
-                  description?: string[]
-                  category?: string[]
-              }
-              formError?: string
-          }
+  | { success: true; id: string }
+  | {
+      success: false
+      error: {
+        fieldErrors?: {
+          name?: string[]
+          description?: string[]
+          category?: string[]
+          image?: string[]
+          denah_lokasi?: string[]
+        }
+        formError?: string
       }
+    }
 > {
-    const parsed = formSchema.safeParse({
-        name: formData.get('name'),
-        description: formData.get('description'),
-        category: formData.get('category'),
-        imageUrl: formData.get('imageUrl'),
+  const parsed = formSchema.safeParse({
+    name: formData.get('name'),
+    description: formData.get('description'),
+    category: formData.get('category'),
+    image: formData.get('image') ?? '',
+    denah_lokasi: formData.get('denah_lokasi') ?? '',
+  })
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: {
+        fieldErrors: parsed.error.flatten().fieldErrors,
+        formError: parsed.error.message,
+      },
+    }
+  }
+
+  const data = parsed.data
+
+  try {
+    const fasilitasRef = ref(database, `fasilitas/${data.category}`)
+    const snapshot = await get(fasilitasRef)
+    const existingData = snapshot.exists() ? snapshot.val() : {}
+
+    const slug = slugify(data.name, { lower: true, strict: true, trim: true })
+
+    let maxId = 0
+    Object.values(existingData).forEach((item: any) => {
+      if (item?.id && typeof item.id === 'number' && item.id > maxId) {
+        maxId = item.id
+      }
     })
 
-    if (!parsed.success) {
-        return {
-            success: false,
-            error: {
-                fieldErrors: parsed.error.flatten().fieldErrors,
-                formError: parsed.error.message,
-            },
-        }
+    const newId = maxId + 1
+
+    const fasilitasRefNew = ref(database, `fasilitas/${data.category}/${slug}`)
+    await set(fasilitasRefNew, {
+    id: newId,
+    name: data.name,
+    description: data.description,
+    slug,
+    category: data.category,
+    imageUrl: data.image,
+    updated_at: new Date().toISOString(),
+    })
+
+    return { success: true, id: slug }
+  } catch (error) {
+    console.error('Error:', error)
+    return {
+      success: false,
+      error: { formError: 'Terjadi kesalahan saat menyimpan data fasilitas' },
     }
-
-    const data = parsed.data
-
-    try {
-        const fasilitasRef = ref(database, `fasilitas/${data.category}`)
-        const snapshot = await get(fasilitasRef)
-        const existingData = snapshot.exists() ? snapshot.val() : {}
-
-        const existingFasilitas = Object.values(existingData).find(
-            (fasilitas: any) =>
-                fasilitas.name.toLowerCase() === data.name.toLowerCase()
-        )
-
-        if (existingFasilitas) {
-            return {
-                success: false,
-                error: {
-                    fieldErrors: {
-                        name: [
-                            'Fasilitas dengan nama ini sudah ada dalam kategori yang sama',
-                        ],
-                    },
-                },
-            }
-        }
-
-        const slug = slugify(data.name, {
-            lower: true,
-            strict: true,
-            trim: true,
-        })
-
-        let maxId = 0
-        Object.values(existingData).forEach((fasilitas: any) => {
-            if (
-                fasilitas.id &&
-                typeof fasilitas.id === 'number' &&
-                fasilitas.id > maxId
-            ) {
-                maxId = fasilitas.id
-            }
-        })
-
-        const newId = maxId + 1
-        const newFasilitasData = {
-            id: newId,
-            name: data.name,
-            description: data.description,
-            category: data.category,
-            imageUrl: data.imageUrl || '',
-            slug: slug,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        }
-
-        const newFasilitasRef = ref(
-            database,
-            `fasilitas/${data.category}/${slug}`
-        )
-        await set(newFasilitasRef, newFasilitasData)
-
-        console.log('Fasilitas created successfully:', newFasilitasData)
-
-        return {
-            success: true,
-            id: slug,
-        }
-    } catch (error) {
-        console.error('Error creating fasilitas:', error)
-        return {
-            success: false,
-            error: {
-                formError: 'Terjadi kesalahan saat menyimpan data fasilitas',
-            },
-        }
-    }
+  }
 }
+
+
+
+
 
 export async function getFasilitasByCategory(category?: FasilitasCategory) {
     try {
@@ -294,7 +261,7 @@ export async function updateFasilitas(
             name: data.name,
             description: data.description,
             category: data.category,
-            imageUrl: data.imageUrl || '',
+            imageUrl: data.image || '',
             slug: newSlug,
             created_at: formData.get('created_at') as string,
             updated_at: new Date().toISOString(),

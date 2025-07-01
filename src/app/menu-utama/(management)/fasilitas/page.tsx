@@ -103,7 +103,6 @@ export default function Page() {
                 </div>
             ) : (
                 fasilitasList.map((fasilitas) => (
-                    
                     <Card
                         key={`${fasilitas.category}-${fasilitas.slug}`}
                         className="hover:shadow-lg transition-shadow overflow-hidden"
@@ -157,8 +156,7 @@ export default function Page() {
                                 >
                                     Hapus
                                 </Button>
-                                
-                                 <AddFasilitasItemModal />
+                                <AddFasilitasItemModal id={fasilitas.slug} category={fasilitas.category} />
                             </div>
                         </CardContent>
                     </Card>

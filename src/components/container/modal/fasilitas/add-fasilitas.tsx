@@ -28,6 +28,8 @@ const initialState:
                   name?: string[]
                   description?: string[]
                   category?: string[]
+                  image?: string[]
+                  denah_lokasi?: string[]
               }
               formError?: string
           }
@@ -52,6 +54,7 @@ export default function AddFasilitasModal({ refetch }: AddFasilitasProps) {
     const hasRefetched = useRef<boolean>(false)
     const [selectedImageUrl, setSelectedImageUrl] = useState<string>('')
     const [imageInputValue, setImageInputValue] = useState<string>('')
+    const [denahImage, setDenahImage] = useState<string>('')
 
     const handleImageSelect = (imageUrl: string) => {
         setSelectedImageUrl(imageUrl)
@@ -66,6 +69,7 @@ export default function AddFasilitasModal({ refetch }: AddFasilitasProps) {
             }
             setSelectedImageUrl('')
             setImageInputValue('')
+            setDenahImage('')
             hasRefetched.current = false
         }
     }
@@ -85,12 +89,12 @@ export default function AddFasilitasModal({ refetch }: AddFasilitasProps) {
                 <Button
                     variant="default"
                     size="lg"
-                    className="bg-slate-800 hover:bg-slate-700"
+                    className="bg-background_primary hover:bg-slate-700"
                 >
                     <p className="hidden md:block">Add Fasilitas</p>
                     <Plus />
                 </Button>
-            </DialogTrigger>{' '}
+            </DialogTrigger>
             <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>Tambah Fasilitas</DialogTitle>
@@ -102,11 +106,9 @@ export default function AddFasilitasModal({ refetch }: AddFasilitasProps) {
                     action={formAction}
                     className="space-y-3 max-h-96 overflow-y-auto p-2"
                 >
-                    <input
-                        type="hidden"
-                        name="imageUrl"
-                        value={imageInputValue}
-                    />
+                    <input type="hidden" name="image" value={imageInputValue} />
+                    <input type="hidden" name="denah_lokasi" value={denahImage} />
+
                     <Label htmlFor="category">Kategori Fasilitas</Label>
                     <select
                         id="category"
@@ -149,22 +151,23 @@ export default function AddFasilitasModal({ refetch }: AddFasilitasProps) {
                         className="min-h-[100px]"
                         required
                     />
-                    {!state.success &&
-                        state.error?.fieldErrors?.description && (
-                            <p className="text-sm text-red-500 mt-1">
-                                {state.error.fieldErrors.description[0]}
-                            </p>
-                        )}
+                    {!state.success && state.error?.fieldErrors?.description && (
+                        <p className="text-sm text-red-500 mt-1">
+                            {state.error.fieldErrors.description[0]}
+                        </p>
+                    )}
 
                     {!state.success && state.error?.formError && (
                         <p className="text-sm text-red-500">
                             {state.error.formError}
                         </p>
                     )}
+
+                    {/* Preview Fasilitas */}
                     {selectedImageUrl && (
                         <div className="mt-3">
                             <Label className="text-sm text-gray-600 mb-2 block">
-                                Preview:
+                                Preview Fasilitas
                             </Label>
                             <div className="relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50">
                                 <img
@@ -172,49 +175,25 @@ export default function AddFasilitasModal({ refetch }: AddFasilitasProps) {
                                     alt="Preview"
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                        console.error(
-                                            'Image load error:',
-                                            selectedImageUrl
-                                        )
-                                        e.currentTarget.src =
-                                            '/placeholder-image.png'
-                                        e.currentTarget.alt =
-                                            'Error loading image'
-                                    }}
-                                    onLoad={() => {
-                                        console.log(
-                                            'Image loaded successfully:',
-                                            selectedImageUrl
-                                        )
+                                        console.error('Image load error:', selectedImageUrl)
+                                        e.currentTarget.src = '/placeholder-image.png'
+                                        e.currentTarget.alt = 'Error loading image'
                                     }}
                                 />
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 opacity-0 transition-opacity">
-                                    <span className="text-gray-500 text-sm">
-                                        Loading image...
-                                    </span>
-                                </div>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1 break-all">
-                                URL: {selectedImageUrl}
-                            </p>
                         </div>
                     )}
-                    <div className="pt-2">
-                        <BankImageSelector
-                            onImageSelect={handleImageSelect}
-                            selectedImageUrl={selectedImageUrl}
-                            triggerButton={
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full"
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Pilih dari Bank Image
-                                </Button>
-                            }
-                        />
-                    </div>
+                    <BankImageSelector
+                        onImageSelect={handleImageSelect}
+                        selectedImageUrl={selectedImageUrl}
+                        triggerButton={
+                            <Button type="button" variant="outline" className="w-full">
+                                <Plus className="w-4 h-4 mr-2" /> Pilih Gambar Fasilitas
+                            </Button>
+                        }
+                    />
+
+
                 </form>
                 <DialogFooter>
                     <Button
