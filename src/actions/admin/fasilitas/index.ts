@@ -257,15 +257,15 @@ export async function updateFasilitas(
         }
 
         const updatedFasilitasData = {
-            id: parseInt(formData.get('id') as string),
-            name: data.name,
-            description: data.description,
-            category: data.category,
-            imageUrl: data.image || '',
-            slug: newSlug,
-            created_at: formData.get('created_at') as string,
-            updated_at: new Date().toISOString(),
-        }
+        id: parseInt(formData.get('id') as string),
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        imageUrl: data.image || '', // <-- gunakan data.image
+        slug: newSlug,
+        created_at: formData.get('created_at') as string,
+        updated_at: new Date().toISOString(),
+}
 
         const newFasilitasRef = ref(
             database,
