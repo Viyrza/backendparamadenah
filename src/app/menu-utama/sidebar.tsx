@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Home, Bell, ImageIcon, LogOutIcon, Proportions } from 'lucide-react'
+import { Home, Bell, ImageIcon, LogOutIcon, Proportions, Map } from 'lucide-react'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase/firebase.config'
 import { logoutAction } from '@/actions/admin/auth'
@@ -38,13 +38,16 @@ const menuItems: MenuItems[] = [
         href: '/menu-utama/fasilitas',
         lucideIcon: Proportions,
     },
-
+    {
+        name: 'Navigation Nodes',
+        href: '/menu-utama/navigation-node',
+        lucideIcon: Map,
+    },
     {
         name: 'Notification',
         href: '/menu-utama/notification',
         lucideIcon: Bell,
     },
-
     {
         name : 'User Management',
         href: '/menu-utama/user',

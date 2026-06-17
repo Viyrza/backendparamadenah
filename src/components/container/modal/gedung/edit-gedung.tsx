@@ -24,6 +24,8 @@ const initialState:
                   name?: string[]
                   image?: string[]
                   kode_gedung?: string[]
+                  latitude?: string[]
+                  longitude?: string[]
               }
           }
       } = {
@@ -140,15 +142,40 @@ export default function EditModalGedung(props: EditModalGedungProps) {
                             </div>
 
                             <div>
-                                <Label>Image URL (Optional)</Label>
+                                <Label>Latitude</Label>
                                 <Input
-                                    name="image"
-                                    type="url"
-                                    placeholder="https://example.com/image.jpg"
-                                    defaultValue={gedungData?.image || ''}
+                                    name="latitude"
+                                    type="number"
+                                    step="any"
+                                    placeholder="Contoh: -6.348201"
+                                    defaultValue={gedungData?.latitude || ''}
+                                    required
                                 />
                                 {!state.success &&
-                                    state.error?.fieldErrors?.image?.map(
+                                    state.error?.fieldErrors?.latitude?.map(
+                                        (error, index) => (
+                                            <p
+                                                key={index}
+                                                className="text-sm text-red-500"
+                                            >
+                                                {error}
+                                            </p>
+                                        )
+                                    )}
+                            </div>
+
+                            <div>
+                                <Label>Longitude</Label>
+                                <Input
+                                    name="longitude"
+                                    type="number"
+                                    step="any"
+                                    placeholder="Contoh: 106.841912"
+                                    defaultValue={gedungData?.longitude || ''}
+                                    required
+                                />
+                                {!state.success &&
+                                    state.error?.fieldErrors?.longitude?.map(
                                         (error, index) => (
                                             <p
                                                 key={index}

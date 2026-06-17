@@ -11,6 +11,12 @@ const formSchema = z.object({
     kode_gedung: z
         .string()
         .min(2, { message: 'Kode gedung minimal 2 karakter' }),
+    latitude: z.number()
+        .min(-90, { message: 'Latitude harus antara -90 hingga 90' })
+        .max(90, { message: 'Latitude harus antara -90 hingga 90' }),
+    longitude: z.number()
+        .min(-180, { message: 'Longitude harus antara -180 hingga 180' })
+        .max(180, { message: 'Longitude harus antara -180 hingga 180' }),
 })
 
 export async function createGedung(
@@ -25,15 +31,22 @@ export async function createGedung(
                   name?: string[]
                   image?: string[]
                   kode_gedung?: string[]
+                  latitude?: string[]
+                  longitude?: string[]
               }
               formError?: string
           }
       }
 > {
+    const latitude = formData.get('latitude')
+    const longitude = formData.get('longitude')
+
     const parsed = formSchema.safeParse({
         name: formData.get('name'),
         image: formData.get('image') || undefined,
         kode_gedung: formData.get('kode_gedung'),
+        latitude: latitude ? parseFloat(latitude as string) : undefined,
+        longitude: longitude ? parseFloat(longitude as string) : undefined,
     })
 
     if (!parsed.success) {
@@ -106,6 +119,8 @@ export async function createGedung(
             name: data.name,
             kode_gedung: data.kode_gedung,
             image: data.image || null,
+            latitude: data.latitude,
+            longitude: data.longitude,
             slug: slug,
             kelas: {},
             created_at: new Date().toISOString(),
@@ -269,6 +284,12 @@ const updateGedungSchema = z.object({
     kode_gedung: z
         .string()
         .min(2, { message: 'Kode gedung minimal 2 karakter' }),
+    latitude: z.number()
+        .min(-90, { message: 'Latitude harus antara -90 hingga 90' })
+        .max(90, { message: 'Latitude harus antara -90 hingga 90' }),
+    longitude: z.number()
+        .min(-180, { message: 'Longitude harus antara -180 hingga 180' })
+        .max(180, { message: 'Longitude harus antara -180 hingga 180' }),
 })
 
 export async function updateGedung(
@@ -284,14 +305,21 @@ export async function updateGedung(
                   name?: string[]
                   image?: string[]
                   kode_gedung?: string[]
+                  latitude?: string[]
+                  longitude?: string[]
               }
           }
       }
 > {
+    const latitude = formData.get('latitude')
+    const longitude = formData.get('longitude')
+
     const parsed = updateGedungSchema.safeParse({
         name: formData.get('name'),
         image: formData.get('image') || null,
         kode_gedung: formData.get('kode_gedung'),
+        latitude: latitude ? parseFloat(latitude as string) : undefined,
+        longitude: longitude ? parseFloat(longitude as string) : undefined,
     })
 
     if (!parsed.success) {
@@ -366,6 +394,8 @@ export async function updateGedung(
             name: data.name,
             kode_gedung: data.kode_gedung,
             image: data.image || null,
+            latitude: data.latitude,
+            longitude: data.longitude,
             slug: slugify(data.name, { lower: true }),
             updated_at: new Date().toISOString(),
         })
